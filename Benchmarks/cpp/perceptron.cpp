@@ -11,13 +11,10 @@
 //**
 //** Usage:
 //**
-//** $ ./perceptron
-//**   <FEATURES_FILE>
+//** $ ./perceptron < <FEATURES_FILE>
 //**
 //*********************************
 #include <iostream>
-#include <fstream>
-#include <sstream>
 #include <vector>
 
 typedef long long ptype;
@@ -85,20 +82,9 @@ size_t perceptron(const std::vector<std::vector<ptype> >& features,
 //***************************************************
 
 int main(int argc, char** argv) {
-  if (argc != 2) {
-    std::cout << "** Invalid number of arguments" << std::endl;
-    return 0;
-  }
-
-  std::ifstream features_ifs(argv[1]);
-  if (!features_ifs.is_open()) {
-    std::cout << "** Invalid features file" << std::endl;
-    return 0;
-  }
-
   //** Read feature vectors and labels
   int training_count, feature_count;
-  features_ifs >> training_count >> feature_count;
+  std::cin >> training_count >> feature_count;
   ++feature_count; //** Account for bias
 
   std::vector<int> labels(training_count);
@@ -107,14 +93,13 @@ int main(int argc, char** argv) {
     features[i].resize(feature_count);
 
   for (int i = 0; i < training_count; ++i) {
-    features_ifs >> labels[i];
+    std::cin >> labels[i];
     labels[i] = labels[i] ? 1 : -1;
 
     features[i][0] = 1; //** Bias
     for (int j = 1; j < feature_count; ++j)
-      features_ifs >> features[i][j];
+      std::cin >> features[i][j];
   }
-  //**
 
   std::cout << "Fuel: " << perceptron(features, labels) << std::endl;
 }
