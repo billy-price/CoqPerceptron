@@ -3,7 +3,8 @@ CFLAGS = -std=c++11
 
 SRC = \
 	perceptron.cpp \
-	data_generator.cpp
+	data_generator.cpp \
+	makeplotfiles.cpp
 BIN = $(SRC:.cpp=)
 
 COMPILE = $(CC) $(CFLAGS) $< -o $@
