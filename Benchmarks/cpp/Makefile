@@ -21,6 +21,9 @@ perceptron: perceptron.cpp
 data_generator: data_generator.cpp
 	$(COMPILE)
 
+makeplotfiles: makeplotfiles.cpp
+	$(COMPILE)
+
 clean:
 	rm -f $(BIN)
 

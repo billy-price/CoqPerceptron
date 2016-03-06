@@ -5,6 +5,7 @@ module FueledPerceptron where
 
 import qualified Prelude
 
+
 #ifdef __GLASGOW_HASKELL__
 import qualified GHC.Base
 unsafeCoerce = GHC.Base.unsafeCoerce#
