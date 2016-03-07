@@ -1,3 +1,5 @@
+SHELL := /bin/bash
+
 plot_imgs = \
 	plots/images/EpochPlot.png \
 	plots/images/FeaturePlot.png \
@@ -21,6 +23,16 @@ cpp/makeplotfiles : cpp/makeplotfiles.cpp
 
 benchmarks : cppbench hsbench hsoptbench
 
+iris: scripts/runbenchmarks.sh cpp/perceptron hs/ReadData hs/ReadDataOpt
+	@TIMEFORMAT="C++    : %lR"; time cpp/perceptron < data/iris_data
+	@TIMEFORMAT="Coq    : %lR"; time hs/ReadData < data/iris_data > /dev/null
+	@TIMEFORMAT="CoqOpt : %lR"; time hs/ReadDataOpt < data/iris_data > /dev/null
+
+rocks: scripts/runbenchmarks.sh cpp/perceptron hs/ReadData hs/ReadDataOpt
+	@TIMEFORMAT="C++    : %lR"; time cpp/perceptron < data/rocks_int.dat
+	@TIMEFORMAT="Coq    : %lR"; time hs/ReadData < data/rocks_int.dat > /dev/null
+	@TIMEFORMAT="CoqOpt : %lR"; time hs/ReadDataOpt < data/rocks_int.dat > /dev/null
+
 cppbench output/fuels output/cpptimes: scripts/runbenchmarks.sh cpp/perceptron
 	scripts/runbenchmarks.sh cpp/perceptron data/ --all_vectors > output/fuels 2> output/cpptimes
 
@@ -36,6 +48,6 @@ hs/ReadData:
 hsoptbench output/hsopttimes: scripts/runbenchmarks.sh hs/ReadDataOpt
 	scripts/runbenchmarks.sh hs/ReadDataOpt data/ --all_vectors > /dev/null 2> output/hsopttimes
 
-
 hs/ReadDataOpt:
 	cd hs && make ReadDataOpt
+
