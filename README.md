@@ -3,15 +3,11 @@ Verified Coq Implementation of the Integer Valued Perceptron Algorithm
 
 # Building Benchmarks
 
-## Extract to Haskell
+## Build Plots
+
+This will build everything needed to make the plot files and plot images (/plots)
 
 ```Bash
-make
-cd Benchmarks/hs && make
-```
-## Build C++ Perceptron and Data Generator
-
-```Bash
-cd Benchmarks/cpp && make
+cd Benchmarks && make
 ```
 
