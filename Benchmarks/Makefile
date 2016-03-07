@@ -9,11 +9,9 @@ plot_files = \
 	plots/Z.plot
 outputs = \
 	output/fuels \
-        output/times \
-bin = \
-	cpp/perceptron \
-	hs/ReadData \
-	hs/ReadDataOpt
+        output/cpptimes \
+	output/hstimes \
+	output/hsopttimes
 
 plots: $(plot_imgs)
 
@@ -23,24 +21,14 @@ $(plot_imgs) :  $(plot_files) plots/makeplots.gplot
 $(plot_files) : cpp/makeplotfiles benchmarks
 	cpp/makeplotfiles
 
-cpp/makeplotfiles : cpp/makeplotfiles.cc
+cpp/makeplotfiles : cpp/makeplotfiles.cpp
 	cd cpp && make makeplotfiles
 
 benchmarks : $(outputs)
 
-$(outputs) : scripts/runbenchmarks.sh $(bin)
-	scripts/runbenchmarks.sh cpp/perceptron data/ --all_vectors
-	scripts/runbenchmarks.sh hs/ReadData data/
-	scripts/runbenchmarks.sh hs/ReadDataOpt data/ --all_vectors
-
-cpp/perceptron : cpp/perceptron.cpp
+$(outputs) : scripts/runbenchmarks.sh
 	cd cpp && make perceptron
-
-hs/ReadData : hs/ReadData.hs hs/FeuledPerceptron.hs
-	cd hs && make ReadData
-
-hs/ReadDataOpt : hs/ReadDataOpt.hs hs/FeuledPerceptronOpt.hs
-	cd hs && make ReadDataOpt
-
-hs/FeuledPerceptron.hs hs/FeuledPerceptronOpt.hs:
-	cd .. && make
+	cd hs && make
+	scripts/runbenchmarks.sh cpp/perceptron data/ --all_vectors > output/fuels 2> output/cpptimes
+	scripts/runbenchmarks.sh hs/ReadData data/ > /dev/null 2> output/hstimes
+	scripts/runbenchmarks.sh hs/ReadDataOpt data/ --all_vectors > /dev/null 2> output/hsopttimes
