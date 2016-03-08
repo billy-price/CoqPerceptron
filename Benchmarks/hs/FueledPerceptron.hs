@@ -2116,12 +2116,6 @@ zvec_dot :: Nat -> Zvec -> Zvec -> Z
 zvec_dot n v1 v2 =
   fold_left add1 Z0 n (map2 mul1 n v1 v2)
 
-zvec_mult_class :: Nat -> Bool -> Zvec -> Zvec
-zvec_mult_class n l f =
-  case l of {
-   True -> f;
-   False -> map (mul1 (Zneg XH)) n f}
-
 class0 :: Z -> Bool
 class0 i =
   geb i Z0
@@ -2129,6 +2123,12 @@ class0 i =
 correct_class :: Z -> Bool -> Bool
 correct_class i l =
   andb (eqb l (class0 i)) (negb (eqb2 i Z0))
+
+zvec_mult_class :: Nat -> Bool -> Zvec -> Zvec
+zvec_mult_class n l f =
+  case l of {
+   True -> f;
+   False -> map (mul1 (Zneg XH)) n f}
 
 consb :: Nat -> Zvec -> T2 Z
 consb n v =

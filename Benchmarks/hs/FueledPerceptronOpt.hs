@@ -3305,12 +3305,6 @@ zvec_dot :: Nat -> Zvec -> Zvec -> Prelude.Integer
 zvec_dot n v1 v2 =
   fold_left add1 0 n (map2 mul1 n v1 v2)
 
-zvec_mult_class :: Nat -> Prelude.Bool -> Zvec -> Zvec
-zvec_mult_class n l f =
-  case l of {
-   Prelude.True -> f;
-   Prelude.False -> map (mul1 ((\x -> (Prelude.*) x (-1)) 1)) n f}
-
 class0 :: Prelude.Integer -> Prelude.Bool
 class0 i =
   geb i 0
@@ -3318,6 +3312,12 @@ class0 i =
 correct_class :: Prelude.Integer -> Prelude.Bool -> Prelude.Bool
 correct_class i l =
   andb (eqb l (class0 i)) (negb (eqb2 i 0))
+
+zvec_mult_class :: Nat -> Prelude.Bool -> Zvec -> Zvec
+zvec_mult_class n l f =
+  case l of {
+   Prelude.True -> f;
+   Prelude.False -> map (mul1 ((\x -> (Prelude.*) x (-1)) 1)) n f}
 
 consb :: Nat -> Zvec -> ([]) Prelude.Integer
 consb n v =

@@ -1,16 +1,6 @@
 Require Import Coq.Vectors.Vector.
 Require Import ZArith.
-
-Definition Zvec := Vector.t Z. 
-Definition Zvec_plus {n:nat} (v1 v2 : Zvec n) := map2 Zplus v1 v2.
-Definition Zvec_dot {n:nat} (v1 v2 : Zvec n) := fold_left Zplus Z0 (map2 Zmult v1 v2).
-Definition Zvec_normsq {n:nat} (v1 : Zvec n) := Zvec_dot v1 v1.
-Definition Zvec_mult_class {n:nat} (l :bool) (f : Zvec n) := if l then f else map (Zmult (Zneg 1)) f.
-Definition class (i : Z) : bool := Z.geb i Z0.
-Definition correct_class (i : Z) (l : bool) : bool :=
-  andb (Bool.eqb l (class i)) (negb (Z.eqb i Z0)).
-Definition consb {n : nat} (v : Zvec n) := cons _ (Zpos 1) _ v.
-Definition Zvec_zero (n : nat) : Zvec n := const Z0 n.
+Require Import ZvecArith.
 
 (************************************************************************************************
    W should be a vector of size 1 more than a feature vector.
@@ -42,28 +32,28 @@ Fixpoint perceptron {n:nat} (E:nat) (T: list ((Zvec n)*bool)) (w : Zvec (S n)) :
       end
   end.
 
-Fixpoint IPOL {n:nat} (T:list ((Zvec n) * (bool))) (w: Zvec (S n)) : option ((list ((Zvec n)*bool))*(Zvec (S n))) := 
+Fixpoint inner_perceptron_MCE {n:nat} (T:list ((Zvec n) * (bool))) (w: Zvec (S n)) : option ((list ((Zvec n)*bool))*(Zvec (S n))) := 
   match T with
   | List.nil => None
   | List.cons (f, l) T' =>
       match correct_class (Zvec_dot w (consb f)) l with
-      | true => IPOL T' w
+      | true => inner_perceptron_MCE T' w
       | false =>
-         match IPOL T' (Zvec_plus w (Zvec_mult_class l (consb f))) with
+         match inner_perceptron_MCE T' (Zvec_plus w (Zvec_mult_class l (consb f))) with
          | None => Some ((List.cons (f, l) List.nil), (Zvec_plus w (Zvec_mult_class l (consb f))))
          | Some (L, w') => Some ((List.cons (f, l) L), w')
          end
       end
   end.
 
-Fixpoint POL {n:nat} (E:nat) (T:list ((Zvec n) * (bool))) (w : Zvec (S n)) : option((list ((Zvec n)*bool))*(Zvec (S n))) :=
+Fixpoint perceptron_MCE {n:nat} (E:nat) (T:list ((Zvec n) * (bool))) (w : Zvec (S n)) : option((list ((Zvec n)*bool))*(Zvec (S n))) :=
   match E with
   | 0 => None
   | S E' =>
-      match (IPOL T w) with
+      match (inner_perceptron_MCE T w) with
       | None => Some (List.nil, w)
       | Some (L, w') =>
-        match POL E' T w' with
+        match perceptron_MCE E' T w' with
         | None => None
         | Some (L', w'') => Some ((List.app L L'), w'')
         end
@@ -74,7 +64,7 @@ Fixpoint MCE {n: nat} (E : nat) (T: list ((Zvec n)*bool)) (w : Zvec (S n)) : (li
   match E with
   | 0 => List.nil
   | S E' =>
-    match (IPOL T w) with
+    match (inner_perceptron_MCE T w) with
     | None => List.nil
     | Some (L, w') => (List.app L (MCE E' T w'))
     end
@@ -112,57 +102,3 @@ Qed.
 
 Definition linearly_separable {n: nat} (T : (list ((Zvec n)*bool))) : Prop :=
   exists (w : (Zvec (S n))), correctly_classifiedP T w.
-
-(********************************************************************************************
-    Other Fixpoints that are used to represent computations on the Training data Or Zvec
- ********************************************************************************************)
-Fixpoint Zvec_sum_class {n : nat} (w : Zvec (S n)) (M : list ((Zvec n)*bool)) : Zvec (S n) :=
-  match M with
-  | List.nil => w
-  | List.cons (f, l) M' => Zvec_sum_class (Zvec_plus w (Zvec_mult_class l (consb f))) M'
-  end.
-
-Fixpoint Zvec_sum {n : nat} (M : list ((Zvec n)*bool)) : Zvec (S n) :=
-  match M with
-  | List.nil => Zvec_zero (S n)
-  | List.cons (f, l) M' => Zvec_plus (Zvec_mult_class l (consb f)) (Zvec_sum M')
-  end.
- 
-Fixpoint min_element_product {n : nat} (w : Zvec (S n)) (T: list ((Zvec n)*bool)) : Z :=
-  match T with
-  | List.nil => (Zpos 1) (* avoid divide by zero *)
-  | List.cons (f, l) List.nil => Zvec_dot w (Zvec_mult_class l (consb f))
-  | List.cons (f, l) T' =>
-      if (Z.leb (Zvec_dot w (Zvec_mult_class l (consb f))) (min_element_product w T'))
-      then (Zvec_dot w (Zvec_mult_class l (consb f)))
-      else (min_element_product w T')
-  end.
-
-Fixpoint max_element_normsq {n : nat} (T: list ((Zvec n)*bool)) : Z :=
-  match T with
-  | List.nil => (Zpos 1)
-  | List.cons (f, l) List.nil => (Zvec_normsq (consb f))
-  | List.cons (f, l) T' =>
-      if (Z.geb (Zvec_normsq (consb f)) (max_element_normsq T'))
-      then (Zvec_normsq (consb f))
-      else (max_element_normsq T')
-  end.
-
-Fixpoint Zvec_sum_normsq {n:nat} (L: list ((Zvec n)*bool)) : Z :=
-  match L with
-  | List.nil => Z0
-  | List.cons (f, l) L' => Z.add (Zvec_normsq (consb f)) (Zvec_sum_normsq L')
-  end.
-
-Fixpoint Zvec_sum_dot {n:nat} (w : Zvec (S n)) (L: list ((Zvec n)*bool)) : Z :=
-  match L with
-  | List.nil => Z0
-  | List.cons (f, l) L' => Z.add (Zvec_dot w (Zvec_mult_class l (consb f))) (Zvec_sum_dot w L')
-  end.
-
-Fixpoint Zvec_foil {n:nat} (w : Zvec (S n)) (L: list ((Zvec n)*bool)) : Z :=
-  match L with
-  | List.nil => Z0
-  | List.cons (f, l) L' => Z.add (Zvec_dot w (Zvec_mult_class l (consb f)))
-                                 (Zvec_foil (Zvec_plus w (Zvec_mult_class l (consb f))) L')
-  end.
