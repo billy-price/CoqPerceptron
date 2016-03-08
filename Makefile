@@ -4,6 +4,7 @@ Benchmarks/hs/FueledPerceptron.hs Benchmarks/hs/FueledPerceptronOpt.hs: fueled_p
 
 # Hack to automatically fix a bug
 fueled_perceptron.vo: fueled_perceptron.v PerceptronDef.vo fuel.vo ZvecArith.vo
+	$(warning "The following hack fixes an extraction bug in GHC 7.10.2; see the README")
 	coqc fueled_perceptron.v
 	head -8 Benchmarks/hs/FueledPerceptron.hs > out
 	tail -n +10 Benchmarks/hs/FueledPerceptron.hs | head -8 >> out
