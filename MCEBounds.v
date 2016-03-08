@@ -47,7 +47,7 @@ Proof.
   Show that any element in MCE must be in T. Therefore properties of elements of T holds
   for elements of MCE.
   ****************************************************************************************)
-Lemma In_Ipol_In_T : forall {n : nat} (T : list ((Zvec n)*bool)) (w0 : Zvec (S n)) (L : list ((Zvec n)*bool)) (w : Zvec (S n)) (f : Zvec n) (l : bool),
+Lemma In_inner_perceptron_MCE_In_T : forall {n : nat} (T : list ((Zvec n)*bool)) (w0 : Zvec (S n)) (L : list ((Zvec n)*bool)) (w : Zvec (S n)) (f : Zvec n) (l : bool),
   inner_perceptron_MCE T w0 = Some (L, w) -> List.In (f, l) L -> List.In (f, l) T.
 Proof.
   intros n T. induction T; intros. inversion H.
@@ -64,7 +64,7 @@ Proof.
   intros n E. induction E; intros. inversion H.
   simpl in H. destruct (inner_perceptron_MCE T w0) eqn: H0. destruct p as [L w'].
   apply List.in_app_or in H. inversion H.
-  apply In_Ipol_In_T with _ _ _ _ f l in H0. apply H0. apply H1.
+  apply In_inner_perceptron_MCE_In_T with _ _ _ _ f l in H0. apply H0. apply H1.
   apply IHE in H1. apply H1.
   inversion H. Qed.
 
