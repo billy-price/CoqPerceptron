@@ -1,5 +1,46 @@
 # CoqPerceptron
-Verified Coq Implementation of the Integer Valued Perceptron Algorithm
+Verified Coq Implementation of the Integer-Valued Perceptron Algorithm
+
+# Key Files
+
+## Coq
+* [ZvecArith.v](https://github.com/tm507211/CoqPerceptron/blob/master/ZvecArith.v): vector arithmetic
+* [PerceptronDef.v](https://github.com/tm507211/CoqPerceptron/blob/master/PerceptronDef.v): Coq Perceptron
+* [PerceptronSound.v](https://github.com/tm507211/CoqPerceptron/blob/master/PerceptronSound.v): soundness
+* [TerminationRefinement.v](https://github.com/tm507211/CoqPerceptron/blob/master/TerminationRefinement.v): termination refinement proofs
+* [MCEBounds.v](https://github.com/tm507211/CoqPerceptron/blob/master/MCEBounds.v): the "AC bounds" lemmas
+* [PerceptronConvergence.v](https://github.com/tm507211/CoqPerceptron/blob/master/PerceptronConvergence.v): convergence proof
+* [fuel.v](https://github.com/tm507211/CoqPerceptron/blob/master/fuel.v): fuel monad
+* [fueled_perceptron.v](https://github.com/tm507211/CoqPerceptron/blob/master/fueled_perceptron.v): fueled Perceptron and extraction
+
+## Benchmarks/
+* [cpp/](https://github.com/tm507211/CoqPerceptron/tree/master/Benchmarks/cpp): C++ implementation of Perceptron; also, program to generate random data sets
+* [data/](https://github.com/tm507211/CoqPerceptron/tree/master/Benchmarks/data): Real-world and randomly-generated data sets
+* [scripts/](https://github.com/tm507211/CoqPerceptron/tree/master/Benchmarks/scripts): Scripts for generated random data sets and running benchmarks
+
+# Building the Coq Development
+
+Just type
+
+```Bash
+make
+```
+
+## Prerequisites 
+
+* Coq 8.4pl6
+* GHC 7.10.2
+
+Our development may compile with other versions, but this 
+hasn't been tested.
+
+The unoptimized extraction into Haskell of Perceptron does not 
+compile in GHC 7.10.2 without a small tweak, to move the type declaration generated 
+for `unsafeCoerce` to after a compiler-specific `#ifdef` at the top of 
+the file. We automate a patch that does this fix in the `Makefile`.
+
+Our optimized extracted Perceptron didn't trigger this extraction 
+bug.
 
 # Building Benchmarks
 
@@ -56,8 +97,10 @@ Iris Dataset is available [here.](https://archive.ics.uci.edu/ml/datasets/Iris)
 Rocks and Mines is available [here.](https://archive.ics.uci.edu/ml/datasets/Connectionist+Bench+%28Sonar,+Mines+vs.+Rocks%29)
 
 ### Rocks and Mines Dataset
-Due to the scaling of this dataset by 10,000 it is suggested to change the bias term
-to 10,000. This drastically changes the number of Epochs (iterations) of the perceptron.
+Due to the scaling of this dataset by 10,000, we suggest that you change the bias term
+to 10,000 (as we describe in the paper). 
+This drastically changes the number of Epochs (iterations) required for convergence, in both 
+the C++ and Coq versions of Perceptron.
 
 On line 99 of Benchmarks/cpp/perceptron.cpp change
 ```C++
@@ -86,4 +129,4 @@ to
   (\a _ v -> a : v) ( 10000) n v
 ```
 
-Don't Forget to change this back when you want to run this on the other benchmarks.
+Don't forget to revert this change before running the other benchmarks.
