@@ -2,7 +2,7 @@ Set Implicit Arguments.
 
 Require Import ZArith.
 
-Require Import fuel perceptron.
+Require Import fuel ZvecArith PerceptronDef.
 
 Section fueled_perceptron.
   Variable n : nat. (** the dimensionality *)
