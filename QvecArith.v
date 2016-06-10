@@ -1,5 +1,6 @@
 Require Import Coq.Vectors.Vector.
 Require Import QArith.
+Require Import Morphisms Setoid Bool.
 
 (*******************************************************************************************
     Helpful definitions and proofs about Rationals (Q)
@@ -81,12 +82,6 @@ Definition correct_class (i : Q) (l : bool) : bool :=
 Definition Qvec_mult_class {n:nat} (l :bool) (f : Qvec n) :=
   if l then f else map (Qmult (-1%Z#1)) f.
 Definition consb {n : nat} (v : Qvec n) := cons _ 1 _ v.
-
-Inductive Qvec_Eq : forall {n : nat},(Qvec n)->(Qvec n)->Prop :=
-| QNil : Qvec_Eq (nil Q) (nil Q)
-| QCons: forall {n : nat} (v1 v2 : Qvec n) (h1 h2 : Q),
-         Qvec_Eq v1 v2 -> h1 == h2 -> Qvec_Eq (cons Q h1 n v1) (cons Q h2 n v2).
-Notation "a === b" := (Qvec_Eq a b) (at level 70).
 
 Fixpoint Qvec_sum_class {n : nat} (w : Qvec (S n)) (M : list ((Qvec n)*bool)) : Qvec (S n) :=
   match M with
@@ -179,10 +174,16 @@ Proof.
   destruct H1 as [a [v1' H1]]. destruct H2 as [b [v2' H2]].
   destruct H3 as [c [v3' H3]]. rewrite H1. rewrite H2. rewrite H3.
   apply H0. apply IHn. Qed.
+(*****************************************************************************************
+                     Qvec_Eq. Rational Equality of Qvecs.
+ *****************************************************************************************)
+Inductive Qvec_Eq : forall {n : nat},(Qvec n)->(Qvec n)->Prop :=
+| QNil : Qvec_Eq (nil Q) (nil Q)
+| QCons: forall {n : nat} (v1 v2 : Qvec n) (h1 h2 : Q),
+         Qvec_Eq v1 v2 -> h1 == h2 -> Qvec_Eq (cons Q h1 n v1) (cons Q h2 n v2).
+Notation "a === b" := (Qvec_Eq a b) (at level 70).
+SearchAbout relation.
 
- (****************************************************************************************
-    Proofs about Arithmetic on Qvec, Fixpoints/Computations on Qvecs / Training Data.
-  ****************************************************************************************)
 Lemma Qvec_Eq_refl : forall {n : nat} (v : Qvec n),
   v === v.
 Proof.
@@ -190,18 +191,32 @@ Proof.
   apply (QCons _ _ _ _ IHv eq_refl). Qed.
 
 Lemma Qvec_Eq_symm : forall {n : nat} (v1 v2 : Qvec n),
-  v1 === v2 <-> v2 === v1.
+  v1 === v2 -> v2 === v1.
 Proof.
-  intros. split.  set (P := fun {n : nat} (v1 v2 : Qvec n) => v1 === v2 -> v2 === v1).
+  intros n v1 v2. set (P := fun {n : nat} (v1 v2 : Qvec n) => v1 === v2 -> v2 === v1).
   change (P n v1 v2). apply mutual_induction; unfold P; clear P; intros.
   apply QNil. inversion H0; subst. apply Eqdep_dec.inj_pair2_eq_dec in H3.
   apply Eqdep_dec.inj_pair2_eq_dec in H6. subst. apply H in H5.
-  apply QCons. apply H5. symmetry. apply H7. apply eq_nat_dec. apply eq_nat_dec.
-  set (P := fun {n : nat} (v1 v2 : Qvec n) => v2 === v1 -> v1 === v2).
-  change (P n v1 v2). apply mutual_induction; unfold P; clear P; intros.
-  apply QNil. inversion H0; subst. apply Eqdep_dec.inj_pair2_eq_dec in H3.
-  apply Eqdep_dec.inj_pair2_eq_dec in H6. subst. apply H in H5. apply QCons.
-  apply H5. symmetry. apply H7. apply eq_nat_dec. apply eq_nat_dec. Qed.
+  apply QCons. apply H5. symmetry. apply H7. apply eq_nat_dec. apply eq_nat_dec. Qed.
+
+Lemma Qvec_Eq_trans : forall {n : nat} (v1 v2 v3 : Qvec n),
+  v1 === v2 -> v2 === v3 -> v1 === v3.
+Proof.
+  intros n v1 v2 v3. set (P := fun {n : nat} (v1 v2 v3 : Qvec n) =>
+    v1 === v2 -> v2 === v3 -> v1 === v3). change (P n v1 v2 v3).
+  apply triple_induction; unfold P; clear P; intros; simpl. apply QNil.
+  inversion H0; subst. apply Eqdep_dec.inj_pair2_eq_dec in H4.
+  apply Eqdep_dec.inj_pair2_eq_dec in H7. subst. inversion H1; subst.
+  apply Eqdep_dec.inj_pair2_eq_dec in H4. apply Eqdep_dec.inj_pair2_eq_dec in H9.
+  subst. apply QCons. apply H in H6. apply H6. apply H7.
+  apply (Qeq_trans h1 h2 h3 H8 H10). apply eq_nat_dec. apply eq_nat_dec.
+  apply eq_nat_dec. apply eq_nat_dec. Qed.
+
+(* Instance Qvec_Setoid : Equivalence Qvec_Eq. (* Qvec_Eq needs to be a relation *) *)
+
+(****************************************************************************************
+    Proofs about Arithmetic on Qvec, Fixpoints/Computations on Qvecs / Training Data.
+ ****************************************************************************************)
 
 Lemma fold_left_add_unfold : forall {n : nat} (v1 v2 : Qvec n) (A : Q),
  (fold_left Qplus A (map2 Qmult v1 v2)) == (Qplus A (fold_left Qplus 0 (map2 Qmult v1 v2))).
