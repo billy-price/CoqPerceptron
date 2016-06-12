@@ -151,6 +151,12 @@ match v as v' in t _ n1
 | cons a _ v0 => ex_intro _ a (ex_intro _ v0 (refl_equal _))
 end.
 
+Lemma Vector_S_is_cons' : forall {A : Type} {n : nat} (v : t A (S n)),
+  v = cons A (hd v) n (tl v).
+Proof.
+  intros. assert (H := Vector_S_is_cons v). destruct H as [a [v' H]].
+  rewrite H. simpl. reflexivity. Qed.
+
 Lemma mutual_induction : forall {A B: Type} (P : forall {n : nat}, t A n -> t B n -> Prop),
   (P (nil A) (nil B)) -> (forall (h1 : A) (h2 : B) {n : nat} (t1 : t A n) (t2 : t B n),
   (P t1 t2) -> (P (cons A h1 n t1) (cons B h2 n t2))) ->
@@ -174,6 +180,7 @@ Proof.
   destruct H1 as [a [v1' H1]]. destruct H2 as [b [v2' H2]].
   destruct H3 as [c [v3' H3]]. rewrite H1. rewrite H2. rewrite H3.
   apply H0. apply IHn. Qed.
+
 (*****************************************************************************************
                      Qvec_Eq. Rational Equality of Qvecs.
  *****************************************************************************************)
@@ -182,7 +189,6 @@ Inductive Qvec_Eq : forall {n : nat},(Qvec n)->(Qvec n)->Prop :=
 | QCons: forall {n : nat} (v1 v2 : Qvec n) (h1 h2 : Q),
          Qvec_Eq v1 v2 -> h1 == h2 -> Qvec_Eq (cons Q h1 n v1) (cons Q h2 n v2).
 Notation "a === b" := (Qvec_Eq a b) (at level 70).
-SearchAbout relation.
 
 Lemma Qvec_Eq_refl : forall {n : nat} (v : Qvec n),
   v === v.
@@ -212,11 +218,46 @@ Proof.
   apply (Qeq_trans h1 h2 h3 H8 H10). apply eq_nat_dec. apply eq_nat_dec.
   apply eq_nat_dec. apply eq_nat_dec. Qed.
 
-(* Instance Qvec_Setoid : Equivalence Qvec_Eq. (* Qvec_Eq needs to be a relation *) *)
+Instance Qvec_Setoid : forall {n : nat},
+  Equivalence (Qvec_Eq (n := n)).
+Proof.
+  intros. split; red. apply Qvec_Eq_refl.
+  apply Qvec_Eq_symm. apply Qvec_Eq_trans. Qed.
 
-(****************************************************************************************
-    Proofs about Arithmetic on Qvec, Fixpoints/Computations on Qvecs / Training Data.
- ****************************************************************************************)
+Theorem Qvec_Eq_dec : forall {n : nat} (v1 v2 : Qvec n),
+  {v1 === v2} + {~ v1 === v2}.
+Proof.
+  intros. induction v1. rewrite (Vector_0_is_nil v2). left. apply QNil.
+  assert (H := Vector_S_is_cons' v2). rewrite H. assert (H0 := IHv1 (tl v2)).
+  inversion H0. assert (H2 := Qeq_dec h (hd v2)). inversion H2.
+  left. apply (QCons _ _ _ _ H1 H3). right. unfold not. intros.
+  apply H3. inversion H4. apply H11. right. unfold not. intros.
+  apply H1. inversion H2. apply Eqdep_dec.inj_pair2_eq_dec in H5. rewrite <- H5.
+  apply Eqdep_dec.inj_pair2_eq_dec in H8. rewrite <- H8. apply H7.
+  apply eq_nat_dec. apply eq_nat_dec. Qed.
+
+Theorem Qvec_not_eq_symm : forall {n : nat} (v1 v2 : Qvec n),
+  ~ v1 === v2 -> ~ v2 === v1.
+Proof.
+  intros. unfold not. intros. apply H. apply (Qvec_Eq_symm _ _ H0). Qed.
+
+(***************** Setoid Compatibility Results *****************)
+Theorem Qvec_plus_comp : forall {n : nat},
+  Proper (Qvec_Eq==>Qvec_Eq==>Qvec_Eq) (Qvec_plus (n := n)).
+Proof.
+  intros. unfold Proper; unfold respectful; intros. induction n.
+  rewrite(Vector_0_is_nil x). rewrite (Vector_0_is_nil x0).
+  rewrite(Vector_0_is_nil y). rewrite (Vector_0_is_nil y0). simpl. apply QNil.
+  assert (Hx := Vector_S_is_cons x). assert (Hx0 := Vector_S_is_cons x0).
+  assert (Hy := Vector_S_is_cons y). assert (Hy0 := Vector_S_is_cons y0).
+  destruct Hx as [hx [x' Hx]]. destruct Hx0 as [hx0 [x0' Hx0]].
+  destruct Hy as [hy [y' Hy]]. destruct Hy0 as [hy0 [y0' Hy0]]. subst.
+  inversion H0. inversion H. subst. apply Eqdep_dec.inj_pair2_eq_dec in H3.
+  apply Eqdep_dec.inj_pair2_eq_dec in H6. subst.
+  apply Eqdep_dec.inj_pair2_eq_dec in H10. apply Eqdep_dec.inj_pair2_eq_dec in H13.
+  subst. assert (HH := IHn _ _ H12 _ _ H5). simpl. apply QCons. apply HH.
+  rewrite H14. rewrite H7. reflexivity. apply eq_nat_dec. apply eq_nat_dec.
+  apply eq_nat_dec. apply eq_nat_dec. Qed.
 
 Lemma fold_left_add_unfold : forall {n : nat} (v1 v2 : Qvec n) (A : Q),
  (fold_left Qplus A (map2 Qmult v1 v2)) == (Qplus A (fold_left Qplus 0 (map2 Qmult v1 v2))).
@@ -228,6 +269,52 @@ Proof.
   simpl. rewrite (H (A + h1 * h2)). rewrite (H (0 + h1*h2)). rewrite Qplus_0_l.
   rewrite Qplus_assoc. reflexivity. Qed.
 
+Theorem Qvec_dot_comp : forall {n : nat},
+  Proper (Qvec_Eq==>Qvec_Eq==>Qeq) (Qvec_dot (n := n)).
+Proof.
+  intros. unfold Proper, respectful; intros. induction n.
+  rewrite (Vector_0_is_nil x). rewrite (Vector_0_is_nil x0).
+  rewrite (Vector_0_is_nil y). rewrite (Vector_0_is_nil y0). reflexivity.
+  assert (Hx := Vector_S_is_cons x). assert (Hx0 := Vector_S_is_cons x0).
+  assert (Hy := Vector_S_is_cons y). assert (Hy0 := Vector_S_is_cons y0).
+  destruct Hx as [hx [x' Hx]]. destruct Hx0 as [hx0 [x0' Hx0]].
+  destruct Hy as [hy [y' Hy]]. destruct Hy0 as [hy0 [y0' Hy0]]. subst.
+  unfold Qvec_dot. simpl. rewrite fold_left_add_unfold. fold (Qvec_dot x' x0').
+  rewrite fold_left_add_unfold. fold (Qvec_dot y' y0'). repeat rewrite Qplus_0_l.
+  inversion H0. inversion H. subst. subst. apply Eqdep_dec.inj_pair2_eq_dec in H3.
+  apply Eqdep_dec.inj_pair2_eq_dec in H6. subst.
+  apply Eqdep_dec.inj_pair2_eq_dec in H10. apply Eqdep_dec.inj_pair2_eq_dec in H13.
+  subst. assert (HH := IHn _ _ H12 _ _ H5). rewrite H7. rewrite H14. rewrite HH.
+  reflexivity. apply eq_nat_dec. apply eq_nat_dec. apply eq_nat_dec. apply eq_nat_dec. Qed.
+
+Theorem Qvec_normsq_comp : forall {n : nat},
+  Proper (Qvec_Eq==>Qeq) (Qvec_normsq (n := n)).
+Proof.
+  intros. unfold Proper, respectful, Qvec_normsq; intros.
+  apply (Qvec_dot_comp x y H x y H). Qed.
+
+Theorem Qvec_mult_class_comp : forall {n : nat},
+  Proper (eq==>Qvec_Eq==>Qvec_Eq) (Qvec_mult_class (n := n)).
+Proof.
+  intros. unfold Proper, respectful. intros x y Hxy v1 v2.
+  set (P := fun {n : nat} (v1 v2 : Qvec n) => v1 === v2 ->
+  Qvec_mult_class x v1 === Qvec_mult_class y v2). change (P n v1 v2). apply mutual_induction;
+  unfold P; clear P; intros. rewrite Hxy. reflexivity. rewrite Hxy.
+  inversion H0; subst. apply Eqdep_dec.inj_pair2_eq_dec in H3.
+  apply Eqdep_dec.inj_pair2_eq_dec in H6. subst. apply H in H5. unfold Qvec_mult_class.
+  destruct y. apply H0. simpl. simpl in H5. apply QCons. apply H5. rewrite H7. reflexivity.
+  apply eq_nat_dec. apply eq_nat_dec. Qed.
+
+Theorem consb_comp : forall {n : nat},
+  Proper (Qvec_Eq==>Qvec_Eq) (consb (n := n)).
+Proof.
+  intros. unfold Proper, respectful. intros x y. set (P := fun {n : nat} (v1 v2 : Qvec n) =>
+  v1 === v2 -> consb v1 === consb v2). change (P n x y). apply mutual_induction; unfold P;
+  clear P; intros. reflexivity. unfold consb. apply QCons. apply H0. reflexivity. Qed.
+
+(****************************************************************************************
+    Proofs about Arithmetic on Qvec, Fixpoints/Computations on Qvecs / Training Data.
+ ****************************************************************************************)
 Lemma Qvec_consb_gt_0 : forall {n : nat} (f : Qvec n),
  Qgt (Qvec_normsq (consb f)) 0.
 Proof.
