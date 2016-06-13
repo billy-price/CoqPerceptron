@@ -347,8 +347,7 @@ Lemma Qvec_normsq_nonneg : forall {n : nat} (f : Qvec n),
 Proof.
   intros. induction f; unfold Qvec_normsq, Qvec_dot. unfold Qle. reflexivity.
   simpl. rewrite fold_left_add_unfold. fold (Qvec_dot f f). fold (Qvec_normsq f).
-  rewrite Qplus_0_l. SearchAbout Qle.
-  apply (Qplus_le_compat 0 (h*h) 0 _ (Qsquare_nonneg h) IHf). Qed.
+  rewrite Qplus_0_l. apply (Qplus_le_compat 0 (h*h) 0 _ (Qsquare_nonneg h) IHf). Qed.
 
 Lemma Qvec_sum_normsq_nonneg : forall {n : nat} (L : list ((Qvec n)*bool)),
   0 <= (Qvec_sum_normsq L).
@@ -620,57 +619,53 @@ Proof.
   intros. rewrite Qmult_plus_distr_l. repeat (rewrite Qmult_plus_distr_r).
   apply Qplus_assoc. Qed.
 
-(********************************************************************************************
-                               Not yet changed to Qvec
- ********************************************************************************************)
-
-Lemma CSHH : forall (A B : Z),
-  Z.le (Z.add (Z.mul A B) (Z.mul A B)) (Z.add (Z.mul A A) (Z.mul B B)).
+Lemma CSHH : forall (A B : Q),
+  (A * B) + (A * B) <= (A * A) + (B * B).
 Proof.
-  intros. assert (Z.mul (Z.sub A B) (Z.sub A B) = Z.sub (Z.add (Z.mul A A) (Z.mul B B)) (Z.add (Z.mul A B) (Z.mul A B))).
-  repeat rewrite <- Z.add_opp_r. rewrite Zfoil. rewrite Z.add_opp_r.
-  rewrite Z.mul_opp_opp. assert (Z.mul (Z.opp B) A = Z.mul A (Z.opp B)). apply Z.mul_comm. rewrite H; clear H.
-  repeat rewrite Z.mul_opp_r. repeat (rewrite Z.add_opp_r). omega.
-  assert (Z.le Z0 (Z.mul (Z.sub A B) (Z.sub A B))). apply Z.square_nonneg. rewrite H in H0. omega. Qed.
+  intros. assert ((A - B) * (A - B) == ((A * A) + (B * B)) - ((A * B) + (A * B))).
+  unfold Qminus. rewrite Qfoil. SearchAbout Qopp. repeat rewrite <- Qopp_mult_distr_r.
+  repeat rewrite <- Qopp_mult_distr_l. rewrite Qopp_involutive. repeat rewrite <- Qplus_assoc.
+  rewrite (Qplus_comm _ (B*B)). rewrite (Qplus_assoc _ (B * B) _). rewrite (Qplus_comm _ (B * B)).
+  repeat rewrite <- Qplus_assoc. rewrite <- Qopp_plus. rewrite (Qmult_comm B A). reflexivity. 
+  assert (0 <= (A - B) * (A - B)). apply Qsquare_nonneg. rewrite H in H0.
+  apply (Qplus_le_l _ _ (A * B + A * B)) in H0. rewrite Qplus_0_l in H0. unfold Qminus in H0.
+  rewrite <- (Qplus_assoc (A*A+B*B) (- (A*B + A*B)) (A*B +A*B)) in H0.
+  rewrite (Qplus_comm _ (A*B + A*B)) in H0. rewrite Qplus_opp_r in H0. rewrite Qplus_0_r in H0.
+  apply H0. Qed.
 
 (* This is trivialy true if the parity of negatives is odd *)
-Lemma Cauchy_Schwarz_helper': forall (A B C D : Z),
-  Z.le (Z.add (Z.mul (Z.mul (Z.mul A B) C) D) (Z.mul (Z.mul (Z.mul A B) C) D))
-  (Z.add (Z.mul (Z.mul (Z.mul A A) D) D) (Z.mul (Z.mul (Z.mul B B) C) C)).
+Lemma Cauchy_Schwarz_helper': forall (A B C D : Q),
+  A*B*C*D + A*B*C*D <= A*A*D*D + B*B*C*C.
 Proof.
-  intros. assert (forall (A B C D : Z), Z.mul (Z.mul (Z.mul A B) C) D = Z.mul (Z.mul A D) (Z.mul B C)).
-  intros. assert (Z.mul B0 C0 = Z.mul C0 B0). apply Z.mul_comm. rewrite H.
-  rewrite <- Z.mul_assoc. rewrite <- Z.mul_assoc. assert (Z.mul B0 (Z.mul C0 D0) = Z.mul (Z.mul C0 D0) B0). apply Z.mul_comm.
-  rewrite H0. rewrite Z.mul_assoc. assert (Z.mul C0 D0 = Z.mul D0 C0). apply Z.mul_comm. rewrite H1.
-  repeat rewrite Z.mul_assoc. reflexivity.
-  repeat rewrite H. apply CSHH. Qed.
+  intros. assert (forall (A B C D : Q), A*B*C*D == A*D*(B*C)). intros.
+  rewrite (Qmult_comm B0 C0). rewrite <- Qmult_assoc. rewrite <- Qmult_assoc.
+  rewrite (Qmult_comm B0 (C0 * D0)). rewrite Qmult_assoc. rewrite (Qmult_comm C0 D0).
+  repeat rewrite Qmult_assoc. reflexivity. repeat rewrite H. apply CSHH. Qed.
 
-Lemma Cauchy_Schwarz_helper : forall {n : nat} (v1 v2 : Zvec n) (A B : Z),
-  Z.le (Z.add (Z.mul (Z.mul A B) (Zvec_dot v1 v2)) (Z.mul (Z.mul A B) (Zvec_dot v1 v2)))
-  (Z.add (Z.mul (Z.mul A A) (Zvec_normsq v2)) (Z.mul (Z.mul B B) (Zvec_normsq v1))).
+Lemma Cauchy_Schwarz_helper : forall {n : nat} (v1 v2 : Qvec n) (A B : Q),
+  A*B*(Qvec_dot v1 v2) + A*B*(Qvec_dot v1 v2) <= A*A*(Qvec_normsq v2) + B*B*(Qvec_normsq v1).
 Proof.
-  intros n v1 v2. set (P := fun n (v1 v2 : Zvec n) => forall (A B : Z),
-    Z.le (Z.add (Z.mul (Z.mul A B) (Zvec_dot v1 v2)) (Z.mul (Z.mul A B) (Zvec_dot v1 v2)))
-    (Z.add (Z.mul (Z.mul A A) (Zvec_normsq v2)) (Z.mul (Z.mul B B) (Zvec_normsq v1)))). change (P n v1 v2).
-  apply mutual_induction; unfold P; clear P; intros. unfold Zvec_normsq, Zvec_dot; simpl. omega.
-  repeat (rewrite Zvec_dot_cons). repeat (rewrite Zvec_normsq_cons). repeat (rewrite Z.mul_add_distr_l).
-  repeat (rewrite Z.add_assoc). repeat (rewrite Z.mul_assoc).
-  assert (forall (A B C D : Z), Z.add (Z.add (Z.add A B) C) D  = Z.add (Z.add A C) (Z.add B D)). intros. omega.
-  repeat (rewrite H0); clear H0. assert (H0 := Cauchy_Schwarz_helper' A B h1 h2). assert (H1 := H A B). omega.
-Qed.
+  intros n v1 v2. set (P := fun n (v1 v2 : Qvec n) => forall (A B : Q),
+  A*B*(Qvec_dot v1 v2) + A*B*(Qvec_dot v1 v2) <= A*A*(Qvec_normsq v2) + B*B*(Qvec_normsq v1)).
+  change (P n v1 v2). apply mutual_induction; unfold P; clear P; intros.
+  unfold Qvec_normsq, Qvec_dot; simpl. repeat rewrite Qmult_0_r. apply Qle_refl.
+  repeat (rewrite Qvec_dot_cons). repeat (rewrite Qvec_normsq_cons).
+  repeat (rewrite Qmult_plus_distr_r). repeat (rewrite Qplus_assoc).
+  repeat (rewrite Qmult_assoc). assert (forall (A B C D : Q), A+B+C+D == A+C+(B+D)). intros.
+  repeat rewrite <- Qplus_assoc. rewrite (Qplus_assoc B0 C D). rewrite (Qplus_comm B0 C).
+  rewrite <- Qplus_assoc. reflexivity. repeat rewrite H0; clear H0.
+  assert (H0 := Cauchy_Schwarz_helper' A B h1 h2). apply (Qplus_le_compat _ _ _ _ H0 (H A B)). Qed.
 
-Lemma Cauchy_Schwarz_inequality : forall {n : nat} (v1 v2 : Zvec n),
-  Z.le (Z.mul (Zvec_dot v1 v2) (Zvec_dot v1 v2)) (Z.mul (Zvec_normsq v1) (Zvec_normsq v2)).
+Lemma Cauchy_Schwarz_inequality : forall {n : nat} (v1 v2 : Qvec n),
+  (Qvec_dot v1 v2)*(Qvec_dot v1 v2) <= (Qvec_normsq v1)*(Qvec_normsq v2).
 Proof.
-  intros. set (P := fun n (v1 v2 : Zvec n) => Z.le (Z.mul (Zvec_dot v1 v2) (Zvec_dot v1 v2)) (Z.mul (Zvec_normsq v1) (Zvec_normsq v2))).
-  change (P n v1 v2). apply mutual_induction; unfold P; clear P; intros. reflexivity.
-  repeat (rewrite Zvec_dot_cons). repeat (rewrite Zvec_normsq_cons). repeat (rewrite Zfoil).
-  assert (Z.mul (Z.mul h1 h2) (Z.mul h1 h2) = Z.mul (Z.mul (Z.mul h1 h1) h2) h2). rewrite <- Z.mul_assoc.
-  assert (Z.mul h2 (Z.mul h1 h2) = Z.mul (Z.mul h1 h2) h2). apply Z.mul_comm. rewrite H0; clear H0.
-  repeat (rewrite Z.mul_assoc). reflexivity. rewrite H0; clear H0. repeat (rewrite Z.mul_assoc).
-  assert (Z.mul (Z.mul (Zvec_dot t1 t2) h1) h2 = Z.mul (Z.mul h1 h2) (Zvec_dot t1 t2)). rewrite Z.mul_comm.
-  rewrite Z.mul_assoc. rewrite Z.mul_comm. apply Z.mul_assoc. rewrite H0; clear H0.
-  assert (Z.mul (Z.mul (Zvec_normsq t1) h2) h2 = Z.mul (Z.mul h2 h2) (Zvec_normsq t1)). rewrite Z.mul_comm.
-  rewrite Z.mul_assoc. rewrite Z.mul_comm. apply Z.mul_assoc. rewrite H0; clear H0.
-  assert (forall (A B C D : Z), Z.add (Z.add (Z.add A B) C) D = Z.add A (Z.add (Z.add B C) D)). intros. omega.
-  repeat (rewrite H0); clear H0. assert (H0 := Cauchy_Schwarz_helper t1 t2 h1 h2). omega. Qed.
+  intros. set (P := fun n (v1 v2 : Qvec n) =>
+  (Qvec_dot v1 v2)*(Qvec_dot v1 v2) <= (Qvec_normsq v1)*(Qvec_normsq v2)). change (P n v1 v2).
+  apply mutual_induction; unfold P; clear P; intros. apply Qle_refl.
+  repeat (rewrite Qvec_dot_cons). repeat (rewrite Qvec_normsq_cons). repeat (rewrite Qfoil).
+  rewrite <- Qmult_assoc. rewrite (Qmult_comm h2 (h1 * h2)). repeat rewrite Qmult_assoc.
+  repeat rewrite <- Qplus_assoc. apply (Qplus_le_r _ _ (h1*h1*h2*h2)).
+  repeat rewrite Qplus_assoc. apply Qplus_le_compat.
+  { repeat rewrite <- Qmult_assoc. rewrite (Qmult_comm _ (h1 * h2)).
+    rewrite (Qmult_comm _ (h2 * h2)). repeat rewrite Qmult_assoc. apply Cauchy_Schwarz_helper.
+  } apply H. Qed.
