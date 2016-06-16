@@ -568,7 +568,7 @@ Proof.
   destruct a as [f l]. simpl. rewrite <- Qvec_plus_assoc. apply IHL. Qed.
 
 Lemma Qvec_sum_class_append : forall {n : nat} (w0: Qvec (S n)) (M1 M2: (list ((Qvec n)*bool))),
-  Qvec_sum_class (Qvec_sum_class w0 M1) M2 === Qvec_sum_class w0 (List.app M1 M2).
+  Qvec_sum_class (Qvec_sum_class w0 M1) M2 = Qvec_sum_class w0 (List.app M1 M2).
 Proof.
   intros n w0 M1. generalize dependent w0. induction M1; intros.
   { reflexivity. } destruct a as [f l]. simpl. apply IHM1. Qed.
@@ -623,7 +623,7 @@ Lemma CSHH : forall (A B : Q),
   (A * B) + (A * B) <= (A * A) + (B * B).
 Proof.
   intros. assert ((A - B) * (A - B) == ((A * A) + (B * B)) - ((A * B) + (A * B))).
-  unfold Qminus. rewrite Qfoil. SearchAbout Qopp. repeat rewrite <- Qopp_mult_distr_r.
+  unfold Qminus. rewrite Qfoil. repeat rewrite <- Qopp_mult_distr_r.
   repeat rewrite <- Qopp_mult_distr_l. rewrite Qopp_involutive. repeat rewrite <- Qplus_assoc.
   rewrite (Qplus_comm _ (B*B)). rewrite (Qplus_assoc _ (B * B) _). rewrite (Qplus_comm _ (B * B)).
   repeat rewrite <- Qplus_assoc. rewrite <- Qopp_plus. rewrite (Qmult_comm B A). reflexivity. 

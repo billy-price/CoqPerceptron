@@ -83,24 +83,24 @@ Proof.
     Show that w = Sum of Misclassified Errors
   ***************************************************************************************************)
 Lemma inner_perceptron_MCE_sum_m_w : forall {n : nat} (T M: (list ((Qvec n)*bool))) (w0 w: Qvec (S n)),
-  inner_perceptron_MCE T w0 = Some (M, w) -> w === Qvec_sum_class w0 M.
+  inner_perceptron_MCE T w0 = Some (M, w) -> w = Qvec_sum_class w0 M.
 Proof.
   intros n T. induction T; intros.
   { inversion H. } (* base case T = nil *)
   destruct a as [f l]. inversion H. destruct (correct_class (Qvec_dot w0 (consb f)) l).
   apply IHT in H1. apply H1.
   destruct (inner_perceptron_MCE T (Qvec_plus w0 (Qvec_mult_class l (consb f)))) eqn:H3;
-  [destruct p as [M' w']; apply IHT in H3|]; inversion H1; subst; clear H1.
-  apply H3. reflexivity. Qed.
+  [destruct p as [M' w']; apply IHT in H3|]; inversion H1; subst; clear H1;
+  [rewrite <- H4|]; reflexivity. Qed.
 
 Lemma perceptron_MCE_sum_m_w : forall {n : nat} (E : nat) (T M: (list ((Qvec n)*bool))) (w0 w: Qvec (S n)),
-  perceptron_MCE E T w0 = Some (M, w) -> w === Qvec_sum_class w0 M.
+  perceptron_MCE E T w0 = Some (M, w) -> w = Qvec_sum_class w0 M.
 Proof.
   intros n E. induction E; intros.
   { inversion H. } (* base case *)
   inversion H. destruct (inner_perceptron_MCE T w0) eqn:H2. destruct p as [M' w'].
   apply inner_perceptron_MCE_sum_m_w in H2. destruct (perceptron_MCE E T w') eqn: H3.
-  destruct p as [M'' W'']. inversion H1; subst; clear H1. apply IHE in H3. rewrite H2 in H3.
+  destruct p as [M'' W'']. inversion H1; subst; clear H1. apply IHE in H3.
   rewrite Qvec_sum_class_append in H3. apply H3. inversion H1.
   inversion H1; subst; clear H1. reflexivity. Qed.
 
@@ -186,11 +186,11 @@ Proof.
     destruct p as [L w']. destruct L.
       apply inner_perceptron_MCE_nil_false in H1; inversion H1.
       inversion H.
-    simpl; rewrite H1. split; reflexivity.
+    simpl; rewrite H1. auto.
   unfold MCE in H. destruct (inner_perceptron_MCE T w0) eqn:H1.
   destruct p as [L w']. fold (MCE E T w') in H.
   fold (MCE (S E) T w') in H. apply List.app_inv_head in H.
-  apply IHE in H. simpl. rewrite H1. rewrite H.
+  apply IHE in H. simpl. rewrite H1. simpl in H. rewrite H.
   apply inner_perceptron_MCE_sum_m_w in H1. rewrite H1.
   rewrite Qvec_sum_class_append. auto.
   simpl. rewrite H1. auto. Qed.
@@ -198,7 +198,7 @@ Proof.
  (***************************************************************************************************
     Show that MCE either misclassifies at least E elements after E iterations or is at a fixed point.
   ***************************************************************************************************)
-Lemma MCE_eq_length : forall {n : nat} (E1 E2 : nat) (w0 : Zvec (S n)) (T : list ((Zvec n)*bool)),
+Lemma MCE_eq_length : forall {n : nat} (E1 E2 : nat) (w0 : Qvec (S n)) (T : list ((Qvec n)*bool)),
   length (MCE E1 T w0) = length (MCE E2 T w0) -> (MCE E1 T w0) = (MCE E2 T w0).
 Proof.
   intros n E1. induction E1; intros.
@@ -212,7 +212,7 @@ Proof.
   }
   simpl in H. destruct E2; simpl; rewrite H1; auto. Qed.
 
-Lemma MCE_progress : forall {n : nat} (E : nat) (w0 : Zvec (S n)) (T : list ((Zvec n)*bool)),
+Lemma MCE_progress : forall {n : nat} (E : nat) (w0 : Qvec (S n)) (T : list ((Qvec n)*bool)),
   length (MCE E T w0) >= E \/ MCE E T w0 = MCE (S E) T w0.
 Proof.
   intros n E. induction E; intros.
@@ -224,8 +224,7 @@ Proof.
       destruct L. apply inner_perceptron_MCE_nil_false in H1; inversion H1.
       assert (H2 := (IHE w T)). inversion H2.
       { left. inversion H3. rewrite List.app_length.
-        repeat (rewrite <- H4). SearchAbout List.length.
-        simpl. omega.
+        repeat (rewrite <- H4). simpl. omega.
         rewrite List.app_length. rewrite <- H4. simpl. omega.
       } right. rewrite H3. reflexivity.
     right. reflexivity.
