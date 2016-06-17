@@ -8,8 +8,6 @@ Require Import Setoid.
 Definition Qge_bool (a b : Q) : bool := Qle_bool b a.
 Definition Qlt_bool (a b : Q) : bool := andb (Qle_bool a b) (negb (Qeq_bool a b)).
 Definition Qgt_bool (a b : Q) : bool := Qlt_bool b a.
-Definition Qge (a b : Q) : Prop := Qle b a.
-Definition Qgt (a b : Q) : Prop := Qlt b a.
 
 Lemma Qsquare_nonneg : forall (a : Q),
  0 <= a * a.
@@ -17,9 +15,9 @@ Proof.
   intros a. unfold Qle. simpl. rewrite Zmult_1_r. apply Z.square_nonneg. Qed.
 
 Lemma Qsquare_gt_0 : forall (a : Q),
-  (~a == 0) -> Qgt (a*a) 0.
+  (~a == 0) -> (a*a) > 0.
 Proof.
-  intros. destruct a. unfold Qgt, Qlt. simpl. rewrite Z.mul_1_r. unfold Qeq in H.
+  intros. destruct a. unfold Qlt. simpl. rewrite Z.mul_1_r. unfold Qeq in H.
   simpl in H. rewrite Z.mul_1_r in H. destruct Qnum. exfalso. apply H. reflexivity.
   apply Z.mul_pos_pos; reflexivity. apply Z.mul_neg_neg; reflexivity. Qed.
 
@@ -46,6 +44,12 @@ Proof.
   repeat rewrite Zmult_assoc. rewrite (Zmult_comm _ 2).
   repeat rewrite <- Zmult_assoc. rewrite (Zmult_assoc 2 _ _).
   simpl. reflexivity. Qed.
+
+Lemma Qle_neq_lt : forall (a b : Q),
+  a <= b -> ~ a == b -> a < b.
+Proof.
+  intros. apply Qle_lteq in H. inversion H.
+  apply H1. exfalso. apply H0. apply H1. Qed.
 
 (*****************************************************************************************
     Definitions and Fixpoints for operations on Qvecs
@@ -332,12 +336,11 @@ Proof.
     Proofs about Arithmetic on Qvec, Fixpoints/Computations on Qvecs / Training Data.
  ****************************************************************************************)
 Lemma Qvec_consb_gt_0 : forall {n : nat} (f : Qvec n),
- Qgt (Qvec_normsq (consb f)) 0.
+ Qvec_normsq (consb f) > 0.
 Proof.
   intros n f. unfold Qvec_normsq. unfold Qvec_dot. unfold consb. simpl.
-  unfold Qgt. rewrite fold_left_add_unfold. rewrite Qmult_1_r. rewrite Qplus_0_l.
-  induction f; simpl.
-  { reflexivity. }
+  rewrite fold_left_add_unfold. rewrite Qmult_1_r. rewrite Qplus_0_l.
+  induction f; simpl. { reflexivity. }
   rewrite fold_left_add_unfold. rewrite Qplus_0_l. rewrite (Qplus_comm (h*h) _).
   rewrite Qplus_assoc. apply (Qplus_lt_le_compat 0 _ 0 (h * h) IHf).
   apply Qsquare_nonneg. Qed.
@@ -596,14 +599,14 @@ Proof.
   fold (Qvec_zero (S n)). apply QCons. apply H0. apply q. } left. apply n0. Qed.
 
 Lemma Qvec_normsq_Not_Qvec_Zero : forall {n : nat} (v1 : Qvec n),
-  (~ v1 === Qvec_zero n) -> Qgt (Qvec_normsq v1) 0.
+  (~ v1 === Qvec_zero n) -> Qvec_normsq v1 > 0.
 Proof.
   intros. induction v1. exfalso. apply H. reflexivity.
   apply Qvec_cons_Not_Qvec_zero in H. inversion H. apply Qsquare_gt_0 in H0.
-  unfold Qvec_normsq. unfold Qgt. rewrite Qvec_dot_cons. fold (Qvec_normsq v1).
-  unfold Qgt in H0. apply (Qplus_lt_le_compat 0 _ 0 _ H0). apply Qvec_normsq_nonneg.
-  unfold Qgt. apply IHv1 in H0. unfold Qgt in H0. unfold Qvec_normsq.
-  rewrite Qvec_dot_cons. fold (Qvec_normsq v1). rewrite Qplus_comm.
+  unfold Qvec_normsq. rewrite Qvec_dot_cons. fold (Qvec_normsq v1).
+  apply (Qplus_lt_le_compat 0 _ 0 _ H0). apply Qvec_normsq_nonneg.
+  apply IHv1 in H0. unfold Qvec_normsq. rewrite Qvec_dot_cons.
+  fold (Qvec_normsq v1). rewrite Qplus_comm.
   apply (Qplus_lt_le_compat 0 _ 0 _ H0 (Qsquare_nonneg _)). Qed.
 
 Lemma Qvec_sum_dot_append : forall {n : nat} (L1 L2 : list ((Qvec n)*bool)) (w : Qvec (S n)),

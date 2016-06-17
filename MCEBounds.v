@@ -1,8 +1,45 @@
-Require Import ZArith.
+Require Import QArith.
 Require Import Omega.
-Require Import ZvecArith PerceptronDef.
+Require Import QvecArith PerceptronDef.
 Require Import TerminationRefinement. (* needs inner_perceptron_MCE_sum_m_w *)
 
+Fixpoint inject_nat (n : nat) : Q :=
+match n with
+| O => 0
+| S n' => 1 + (inject_nat n')
+end.
+
+Lemma Qnat_le : forall (A B : nat),
+  (A <= B)%nat -> (inject_nat A) <= (inject_nat B).
+Proof.
+  intros. induction H. apply Qle_refl. simpl. rewrite <- Qplus_0_l.
+  apply (Qplus_le_compat 0 1 (inject_nat A) (inject_nat m)).
+  unfold Qle. simpl. omega. apply IHle. Qed.
+
+Lemma Qnat_lt : forall (A B : nat),
+  (A < B)%nat -> (inject_nat A) < (inject_nat B).
+Proof.
+  intros. induction H. simpl. rewrite <- Qplus_0_l. apply Qplus_lt_le_compat.
+  reflexivity. rewrite Qplus_0_l. apply Qle_refl. simpl. rewrite <- Qplus_0_l.
+  apply Qplus_lt_le_compat. reflexivity. apply Qlt_le_weak. apply IHle. Qed.
+
+Lemma Qnat_le_0 : forall (A : nat),
+  0 <= (inject_nat A).
+Proof.
+  intros. induction A. apply Qle_refl. simpl. apply (Qplus_le_compat 0 _ 0).
+  apply Qlt_le_weak. reflexivity. apply IHA. Qed.
+
+Lemma Square_preserves_le : forall (A B : Q),
+  0 <= A -> 0 <= B ->
+  A <= B -> A*A <= B*B.
+Proof.
+  intros. unfold Qle in H, H0, H1. unfold Qle. simpl. simpl in H, H0, H1.
+  rewrite Z.mul_1_r in H, H0. assert (forall (A B C D : Z), (A*B*(C*D) = (A*C)*(B*D))%Z).
+  intros. repeat rewrite <- Z.mul_assoc. rewrite (Z.mul_assoc B0 C D).
+  rewrite (Z.mul_comm B0 C). rewrite (Z.mul_assoc C B0 D). reflexivity.
+  repeat rewrite Pos2Z.inj_mul. rewrite H2. rewrite (H2 (Qnum B) _ _ _).
+  apply (Zmult_le_compat _ _ _ _ H1 H1); apply (Z.mul_nonneg_nonneg _ _ H (Zle_0_pos _)). Qed.
+(*
  (****************************************************************************************
     Prove that ZtoNat holds a few properties for proving we can transform from
     Z.le to <=
@@ -41,145 +78,166 @@ Lemma mult_preserves_le : forall (A B C : nat),
   B <= C -> A*B <= A*C.
 Proof.
   intros A; induction A; intros. omega.
-  simpl. assert (H0 := IHA B C). omega. Qed.
+  simpl. assert (H0 := IHA B C). omega. Qed. *)
 
  (****************************************************************************************
   Show that any element in MCE must be in T. Therefore properties of elements of T holds
   for elements of MCE.
   ****************************************************************************************)
-Lemma In_inner_perceptron_MCE_In_T : forall {n : nat} (T : list ((Zvec n)*bool)) (w0 : Zvec (S n)) (L : list ((Zvec n)*bool)) (w : Zvec (S n)) (f : Zvec n) (l : bool),
+Lemma In_inner_perceptron_MCE_In_T : forall {n : nat} (T : list ((Qvec n)*bool)) 
+      (w0 : Qvec (S n)) (L : list ((Qvec n)*bool)) (w : Qvec (S n)) (f : Qvec n) (l : bool),
   inner_perceptron_MCE T w0 = Some (L, w) -> List.In (f, l) L -> List.In (f, l) T.
 Proof.
   intros n T. induction T; intros. inversion H.
-  destruct a as [f' l']. simpl in H. destruct (correct_class (Zvec_dot w0 (consb f')) l').
+  destruct a as [f' l']. simpl in H. destruct (correct_class (Qvec_dot w0 (consb f')) l').
   apply IHT with w0 L w f l in H. right. apply H. apply H0.
-  destruct (inner_perceptron_MCE T (Zvec_plus w0 (Zvec_mult_class l' (consb f')))) eqn:H1.
+  destruct (inner_perceptron_MCE T (Qvec_plus w0 (Qvec_mult_class l' (consb f')))) eqn:H1.
   destruct p as [L' w']. inversion H; subst; clear H.
   inversion H0. left. apply H. right. apply IHT with _ _ _ f l in H1. apply H1. apply H.
   inversion H; subst; clear H. inversion H0. left. apply H. inversion H. Qed.
 
-Lemma In_MCE_In_T : forall {n : nat} (E : nat ) (T : list ((Zvec n)*bool)) (w0 : Zvec (S n)) (f : Zvec n) (l : bool),
+Lemma In_MCE_In_T : forall {n : nat} (E : nat ) (T : list ((Qvec n)*bool)) (w0 : Qvec (S n)) (f : Qvec n) (l : bool),
   List.In (f, l) (MCE E T w0) -> List.In (f, l) T.
 Proof.
   intros n E. induction E; intros. inversion H.
   simpl in H. destruct (inner_perceptron_MCE T w0) eqn: H0. destruct p as [L w'].
   apply List.in_app_or in H. inversion H.
   apply In_inner_perceptron_MCE_In_T with _ _ _ _ f l in H0. apply H0. apply H1.
-  apply IHE in H1. apply H1.
-  inversion H. Qed.
+  apply IHE in H1. apply H1. inversion H. Qed.
 
  (****************************************************************************************
                 This section Proves the lower bound A*k^2 of length (MCE ...)
   ****************************************************************************************)
-Definition limit_A {n : nat} (T : list ((Zvec n)*bool)) (wStar: Zvec (S n)) : Z :=
-  Zmult (min_element_product wStar T) (min_element_product wStar T).
+Definition limit_A {n : nat} (T : list ((Qvec n)*bool)) (wStar: Qvec (S n)) : Q :=
+  Qmult (min_element_product wStar T) (min_element_product wStar T).
 
-Lemma correct_class_w_dot_f_pos : forall {n : nat} (w : Zvec (S n)) (f : Zvec n) (l : bool),
- correct_class (Zvec_dot w (consb f)) l = true ->
- Z.gt (Zvec_dot w (Zvec_mult_class l (consb f))) Z0.
+Lemma correct_class_w_dot_f_pos : forall {n : nat} (w : Qvec (S n)) (f : Qvec n) (l : bool),
+ correct_class (Qvec_dot w (consb f)) l = true ->
+ (Qvec_dot w (Qvec_mult_class l (consb f))) > 0.
 Proof.
   intros. destruct l; unfold correct_class in H. simpl.
-  destruct (class (Zvec_dot w (consb f))) eqn:H0. simpl in H.
+  destruct (class (Qvec_dot w (consb f))) eqn:H0. simpl in H.
   unfold class in H0. apply Bool.negb_true_iff in H.
-  assert (H1 := Zge_cases (Zvec_dot w (consb f)) 0). rewrite H0 in H1.
-  rewrite Z.eqb_neq in H. omega. inversion H.
-  destruct (class (Zvec_dot w (consb f))) eqn:H0. inversion H. simpl in H.
-  unfold class in H0. simpl in H0. assert (H1 := Zge_cases (Zvec_dot w (consb f)) Z0).
-  rewrite H0 in H1. unfold Zvec_mult_class. rewrite Zvec_dot_mult_neg_1. omega. Qed.
+  apply Qle_bool_imp_le in H0. apply Qeq_bool_neq in H.
+  apply (Qle_neq_lt _ _ H0). unfold not. intros. apply H.
+  symmetry. apply H1. inversion H.
+  destruct (class (Qvec_dot w (consb f))) eqn:H0. inversion H. simpl in H.
+  unfold class in H0. simpl in H0.
+  assert (0 > (Qvec_dot w (consb f))). apply Qnot_le_lt. unfold not. intros.
+  apply Qle_bool_iff in H1. rewrite H0 in H1. inversion H1.
+  unfold Qvec_mult_class. rewrite Qvec_dot_mult_neg_1.
+  unfold Qlt. simpl. unfold Qlt in H1. simpl in H1.
+  destruct (Qnum (Qvec_dot w (consb f))); try inversion H1.
+  rewrite Z.mul_1_r. rewrite Z.mul_1_r in H1.
+  apply Z.sgn_pos_iff. reflexivity. Qed.
 
-Lemma correct_class_T_limit_A_pos : forall {n : nat} (T : list ((Zvec n)*bool)) (w : Zvec (S n)),
-  correctly_classifiedP T w -> Z.gt (limit_A T w) Z0.
+Lemma correct_class_T_limit_A_pos : forall {n : nat} (T : list ((Qvec n)*bool)) (w : Qvec (S n)),
+  correctly_classifiedP T w -> (limit_A T w) > 0.
 Proof.
   intros n T; induction T; intros. reflexivity.
   inversion H; subst.
   unfold limit_A, min_element_product. fold (min_element_product w T).
-  destruct T. apply correct_class_w_dot_f_pos in H4. destruct (Zvec_dot w (Zvec_mult_class l (consb f))); inversion H4.
-  reflexivity. destruct (Z.leb (Zvec_dot w (Zvec_mult_class l (consb f))) (min_element_product w (List.cons p T))) eqn:H0.
-  apply correct_class_w_dot_f_pos in H4. destruct (Zvec_dot w (Zvec_mult_class l (consb f))); inversion H4. reflexivity.
-  fold (limit_A (List.cons p T) w). apply (IHT w H2).
-Qed.
+  destruct T. apply correct_class_w_dot_f_pos in H4.
+  apply Qsquare_gt_0. unfold not. intros. apply Qlt_not_le in H4. apply H4.
+  rewrite H0. apply Qle_refl.
+  destruct (Qle_bool (Qvec_dot w (Qvec_mult_class l (consb f)))).
+  apply correct_class_w_dot_f_pos in H4.
+  apply Qsquare_gt_0. unfold not. intros. apply Qlt_not_le in H4. apply H4.
+  rewrite H0. apply Qle_refl. apply IHT in H2.
+  unfold limit_A in H2. apply H2. Qed.
 
-Lemma correct_class_T_min_element_product : forall {n : nat} (T : list ((Zvec n)*bool)) (w : Zvec (S n)),
-  correctly_classifiedP T w -> Z.lt Z0 (min_element_product w T).
+Lemma correct_class_T_min_element_product : forall {n : nat} (T : list ((Qvec n)*bool)) (w : Qvec (S n)),
+  correctly_classifiedP T w -> 0 < (min_element_product w T).
 Proof.
-  intros. induction T. simpl. omega. inversion H; subst. apply IHT in H2. apply correct_class_w_dot_f_pos in H4.
-  destruct T. simpl. omega. unfold min_element_product. fold (min_element_product w (List.cons p T)).
-  destruct (Z.leb _ _); omega. Qed.
+  intros. induction T. simpl. reflexivity. inversion H; subst. apply IHT in H2.
+  apply correct_class_w_dot_f_pos in H4. destruct T. simpl. apply H4.
+  unfold min_element_product. fold (min_element_product w (List.cons p T)).
+  destruct (Qle_bool _ _); assumption. Qed.
 
-Lemma correct_class_T_Zvec_normsq_wstar : forall {n : nat} (T : list ((Zvec n)*bool)) (w : Zvec (S n)),
-  correctly_classifiedP T w -> Z.gt (Zvec_normsq w) Z0 \/ T = List.nil.
+Lemma correct_class_T_Qvec_normsq_wstar : forall {n : nat} (T : list ((Qvec n)*bool)) (w : Qvec (S n)),
+  correctly_classifiedP T w -> (Qvec_normsq w) > 0 \/ T = List.nil.
 Proof.
   intros n T; induction T; intros. right. reflexivity. inversion H; subst. apply IHT in H2.
   inversion H2. left. apply H0. subst. left. apply correct_class_w_dot_f_pos in H4.
-  assert (Zvec_dot w (Zvec_mult_class l (consb f)) <> Z0). omega. apply Zvec_dot_Not_Zvec_zero in H0.
-  destruct H0 as [H0 H1]. apply (Zvec_normsq_Not_Zvec_Zero w H0). Qed.
+  inversion H; subst. apply correct_class_w_dot_f_pos in H7. apply Qlt_not_eq in H7.
+  apply Qnot_eq_sym in H7. apply Qvec_dot_Not_Qvec_zero in H7. destruct H7 as [Hw Hlf].
+  apply (Qvec_normsq_Not_Qvec_Zero w Hw). Qed.
 
-Lemma correct_class_T_Zvec_sum_dot_inner_perceptron_MCE : forall {n : nat} (T M: list ((Zvec n)*bool)) (wstar w0 w : Zvec (S n)),
-  correctly_classifiedP T wstar -> inner_perceptron_MCE T w0 = Some (M, w) -> Z.le Z0 (Zvec_sum_dot wstar M).
+Lemma correct_class_T_Qvec_sum_dot_inner_perceptron_MCE : forall {n : nat} 
+                                   (T M: list ((Qvec n)*bool)) (wstar w0 w : Qvec (S n)),
+  correctly_classifiedP T wstar -> inner_perceptron_MCE T w0 = Some (M, w) -> 0 <= Qvec_sum_dot wstar M.
 Proof.
   intros n T M wstar; generalize dependent M; induction T; intros. inversion H0. destruct a as [f l].
-  simpl in H0. inversion H; subst. destruct (correct_class (Zvec_dot w0 (consb f)) l). apply (IHT _ _ _ H5 H0).
-  destruct (inner_perceptron_MCE T (Zvec_plus w0 (Zvec_mult_class l (consb f)))) eqn:H1. destruct p as [M' w']. inversion H0; subst.
-  simpl. apply IHT in H1. apply correct_class_w_dot_f_pos in H6. omega. apply H5. inversion H0; subst.
-  simpl. apply correct_class_w_dot_f_pos in H6. omega. Qed.
+  simpl in H0. inversion H; subst. destruct (correct_class (Qvec_dot w0 (consb f)) l). apply (IHT _ _ _ H5 H0).
+  destruct (inner_perceptron_MCE T (Qvec_plus w0 (Qvec_mult_class l (consb f)))) eqn:H1. destruct p as [M' w'].
+  inversion H0; subst. simpl. apply IHT in H1. apply correct_class_w_dot_f_pos in H6.
+  apply Qlt_le_weak in H6. apply (Qplus_le_compat 0 _ 0 _ H6 H1). apply H5.
+  inversion H0; subst. simpl. apply correct_class_w_dot_f_pos in H6. apply Qlt_le_weak.
+  rewrite Qplus_0_r. apply H6. Qed.
 
-Lemma correct_class_T_Zvec_sum_dot_MCE : forall {n : nat} (E : nat) (T : list ((Zvec n)*bool)) (w w0 : Zvec (S n)),
-  correctly_classifiedP T w -> Z.le Z0 (Zvec_sum_dot w (MCE E T w0)).
+Lemma correct_class_T_Qvec_sum_dot_MCE : forall {n : nat} (E : nat) (T : list ((Qvec n)*bool)) (w w0 : Qvec (S n)),
+  correctly_classifiedP T w -> 0 <= Qvec_sum_dot w (MCE E T w0).
 Proof.
-  intros n E; induction E; intros. reflexivity. unfold MCE. destruct (inner_perceptron_MCE T w0) eqn:H0.
-  destruct p as [L w']. fold (MCE E T w'). rewrite Zvec_sum_dot_append.
-  apply correct_class_T_Zvec_sum_dot_inner_perceptron_MCE with (wstar := w) in H0. apply IHE with (w0 := w') in H. omega.
-  apply H. reflexivity. Qed.
+  intros n E; induction E; intros. apply Qle_refl. unfold MCE. destruct (inner_perceptron_MCE T w0) eqn:H0.
+  destruct p as [L w']. fold (MCE E T w'). rewrite Qvec_sum_dot_append.
+  apply correct_class_T_Qvec_sum_dot_inner_perceptron_MCE with (wstar := w) in H0.
+  apply IHE with (w0 := w') in H. apply (Qplus_le_compat 0 _ 0 _ H0 H). apply H. apply Qle_refl. Qed.
 
-Lemma Constant_le_element_le_sum_min_product : forall {n : nat} (L : list ((Zvec n)*bool)) (w : Zvec (S n)) (A : Z),
-  Z.lt Z0 A ->
-  (forall (f : Zvec n) (l : bool), List.In (f, l) L -> 
-   Z.le A (Zvec_dot w (Zvec_mult_class l (consb f)))) ->
-   (Z.le Z0 (Zvec_sum_dot w L)) /\
-  (Z.to_nat A) * (length L) <= (Z.to_nat (Zvec_sum_dot w L)).
+Lemma Constant_le_element_le_sum_min_product : forall {n : nat} (L : list ((Qvec n)*bool)) (w : Qvec (S n)) (A : Q),
+  0 < A ->
+  (forall (f : Qvec n) (l : bool), List.In (f, l) L -> 
+   A <= (Qvec_dot w (Qvec_mult_class l (consb f)))) ->
+   (0 <= (Qvec_sum_dot w L)) /\
+  A * (inject_nat (length L)) <= (Qvec_sum_dot w L).
 Proof.
-  intros n L; induction L; intros. simpl. split; omega. destruct a as [f l]. simpl. rewrite mult_succ_r.
-  assert (H1 := H0 f l). assert (H2 : forall f l, List.In (f, l) L -> Z.le A (Zvec_dot w (Zvec_mult_class l (consb f)))).
-  intros. assert (H3 : List.In (f0, l0) (List.cons (f, l) L)). right. apply H2. apply (H0 _ _ H3). assert (H3 := IHL w A H H2).
-  assert (List.In (f, l) (List.cons (f, l) L)). left. reflexivity. apply H1 in H4. split. omega.
-  rewrite Z2Nat.inj_add;[|omega|omega]. apply ZtoNat_le in H4. omega. Qed.
+  intros n L; induction L; intros. simpl. split; [|rewrite Qmult_0_r]; apply Qle_refl.
+  destruct a as [f l]. simpl. rewrite Qmult_plus_distr_r. rewrite Qmult_1_r.
+  assert (H1 := H0 f l). assert (H2 : forall f l, List.In (f, l) L ->
+  A <= (Qvec_dot w (Qvec_mult_class l (consb f)))). intros.
+  assert (H3 : List.In (f0, l0) (List.cons (f, l) L)). right. apply H2. apply (H0 _ _ H3).
+  assert (H3 := IHL w A H H2). assert (List.In (f, l) (List.cons (f, l) L)). left. reflexivity.
+  apply H1 in H4. split. apply (Qplus_le_compat 0 _ 0 _). apply Qlt_le_weak in H.
+  apply (Qle_trans 0 A _ H H4). apply H3. apply Qplus_le_compat. apply H4. apply H3. Qed.
 
-Lemma Element_T_le_limit_A : forall {n : nat} (T : list ((Zvec n)*bool)) (w : Zvec (S n)) (f : Zvec n) (l : bool),
- List.In (f, l) T -> Z.le (min_element_product w T) (Zvec_dot w (Zvec_mult_class l (consb f))).
+Lemma Element_T_le_limit_A : forall {n : nat} (T : list ((Qvec n)*bool)) (w : Qvec (S n)) (f : Qvec n) (l : bool),
+ List.In (f, l) T -> min_element_product w T <= Qvec_dot w (Qvec_mult_class l (consb f)).
 Proof.
   intros n T w; induction T; intros. inversion H. destruct a as [f' l']. inversion H. inversion H0; subst.
-  unfold min_element_product. fold (min_element_product w T). destruct T. omega.
-  destruct (Z.leb (Zvec_dot w (Zvec_mult_class l (consb f))) (min_element_product w (List.cons p T))) eqn:H1. omega.
-  assert (H2 := Zle_cases (Zvec_dot w (Zvec_mult_class l (consb f))) (min_element_product w (List.cons p T))).
-  rewrite H1 in H2. omega. apply IHT in H0. unfold min_element_product. fold (min_element_product w T).
-  destruct T. inversion H; inversion H1; subst. omega.
-  destruct (Z.leb (Zvec_dot w (Zvec_mult_class l' (consb f'))) (min_element_product w (List.cons p T))) eqn:H1.
-  assert (H2 := Zle_cases (Zvec_dot w (Zvec_mult_class l' (consb f'))) (min_element_product w (List.cons p T))).
-  rewrite H1 in H2. omega. omega. Qed.
+  unfold min_element_product. fold (min_element_product w T). destruct T. apply Qle_refl.
+  destruct (Qle_bool _ _) eqn:H1. apply Qle_refl.
+  assert (~ (Qvec_dot w (Qvec_mult_class l (consb f))) <= (min_element_product w (p :: T))).
+  unfold not. intros. apply Qle_bool_iff in H2. rewrite H1 in H2. inversion H2.
+  apply Qnot_le_lt in H2. apply Qlt_le_weak in H2. apply H2. apply IHT in H0.
+  destruct T. inversion H. inversion H1; subst; apply Qle_refl. inversion H1.
+  unfold min_element_product. fold (min_element_product w (p :: T)).
+  destruct (Qle_bool _ _) eqn:H1. apply Qle_bool_iff in H1. apply (Qle_trans _ _ _ H1 H0).
+  apply H0. Qed.
 
-Lemma linearly_separable_lower_bound : forall {n : nat} (T : list ((Zvec n)*bool)) (w0 : Zvec (S n)),
-  linearly_separable T -> (exists (A B : nat), forall (E : nat),
-  A <> 0 /\ B <> 0 /\
-  A*(List.length (MCE E T w0))*(List.length (MCE E T w0)) <=
-  B*(Z.to_nat (Zvec_normsq (Zvec_sum (MCE E T w0))))).
+Lemma linearly_separable_lower_bound : forall {n : nat} (T : list ((Qvec n)*bool)) (w0 : Qvec (S n)),
+  linearly_separable T -> (exists (A B : Q), forall (E : nat),
+  ~(A == 0) /\ ~(B == 0) /\
+  A* (inject_nat (length (MCE E T w0)))*(inject_nat (length (MCE E T w0))) <=
+  B*(Qvec_normsq (Qvec_sum (MCE E T w0)))).
 Proof.
   intros. unfold linearly_separable in H. destruct H as [wstar H]. assert (H0 := H). assert (H1 := H).
-  apply correct_class_T_limit_A_pos in H. apply correct_class_T_Zvec_normsq_wstar in H0.
-  exists (Z.to_nat (limit_A T wstar)). inversion H0. exists (Z.to_nat (Zvec_normsq wstar)).
-  intros E. split. destruct (limit_A T wstar); try (inversion H; fail). simpl. assert (H3 := Pos2Nat.is_pos p).
-  omega. split. destruct (Zvec_normsq wstar); try (inversion H2; fail). simpl. assert (H3 := Pos2Nat.is_pos p). omega.
-  { rewrite <- (Z2Nat.inj_mul _ _ (Zvec_normsq_not_neg wstar) (Zvec_normsq_not_neg (Zvec_sum (MCE E T w0)))).
-    assert (H3 := Cauchy_Schwarz_inequality wstar (Zvec_sum (MCE E T w0))). apply ZtoNat_le in H3. rewrite <- H3; clear H3.
-    repeat rewrite Zvec_dot_sum_eq. assert (H3 := H1). apply (correct_class_T_Zvec_sum_dot_MCE E T _ w0) in H1.
-    rewrite (Z2Nat.inj_mul _ _ H1 H1). unfold limit_A. apply correct_class_T_min_element_product in H3.
-    rewrite (Z2Nat.inj_mul _ _);[|omega|omega]. assert (forall (A B : nat), A*A*B*B = (A*B)*(A*B)). intros. rewrite mult_assoc.
-    rewrite mult_comm. rewrite mult_assoc. rewrite mult_assoc. assert (B*A = A*B). apply mult_comm. rewrite H4; clear H4. omega.
-    rewrite H4; clear H4. assert (H4 := square_preserves_le ((Z.to_nat (min_element_product wstar T))*(length (MCE E T w0)))
-    (Z.to_nat (Zvec_sum_dot wstar (MCE E T w0)))). apply H4; clear H4. apply Constant_le_element_le_sum_min_product. apply H3.
-    intros. apply In_MCE_In_T in H4. apply Element_T_le_limit_A with (w := wstar) in H4. apply H4.
-  } exists 1. intros E. split. destruct (limit_A T wstar); try (inversion H; fail). simpl. assert (H3 := Pos2Nat.is_pos p).
-  omega. split. omega. destruct E. simpl. omega. rewrite H2. simpl. omega.
-Qed.
+  apply correct_class_T_limit_A_pos in H. apply correct_class_T_Qvec_normsq_wstar in H0.
+  exists (limit_A T wstar). inversion H0. exists (Qvec_normsq wstar).
+  intros E. split. apply Qlt_not_le in H. unfold not. intros. apply H. rewrite H3. apply Qle_refl. split.
+  apply Qlt_not_le in H2. unfold not. intros. apply H2. rewrite H3. apply Qle_refl.
+  { apply (Qle_trans _ ((Qvec_dot wstar (Qvec_sum (MCE E T w0)))*(Qvec_dot wstar (Qvec_sum (MCE E T w0)))) _).
+    { rewrite Qvec_dot_sum_eq. assert (H3 := H1). apply correct_class_T_min_element_product in H3.
+      unfold limit_A. repeat rewrite <- Qmult_assoc. rewrite (Qmult_assoc _ (inject_nat _) (inject_nat _)).
+      rewrite (Qmult_comm (min_element_product _ _) (inject_nat _)). repeat rewrite <- Qmult_assoc.
+      rewrite Qmult_assoc. apply Square_preserves_le. rewrite <- (Qmult_0_l (inject_nat (length (MCE E T w0)))).
+      apply Qlt_le_weak in H3. apply (Qmult_le_compat_r _ _ _ H3 (Qnat_le_0 _)).
+      apply (correct_class_T_Qvec_sum_dot_MCE _ _ _ _ H1).
+      apply Constant_le_element_le_sum_min_product. apply H3.
+      intros. apply In_MCE_In_T in H4. apply (Element_T_le_limit_A _ wstar _ _ H4).
+    } apply Cauchy_Schwarz_inequality.
+  } exists 1. intros E. split. apply Qlt_not_le in H. unfold not. intros. apply H. rewrite H3. 
+  apply Qle_refl. split. apply Q_apart_0_1. subst. unfold limit_A. simpl.
+  repeat rewrite (Qmult_1_l). destruct E; simpl; rewrite Qmult_0_l; apply Qvec_normsq_nonneg. Qed.
+
  (****************************************************************************************
         This section will contains the proof of upper bound B*k on length (MCE ...)
   ****************************************************************************************)
