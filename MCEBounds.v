@@ -3,6 +3,10 @@ Require Import Omega.
 Require Import QvecArith PerceptronDef.
 Require Import TerminationRefinement. (* needs inner_perceptron_MCE_sum_m_w *)
 
+(************************************************************************************************************
+         Defines an injection from natural numbers to rationals and proves some basic properties.
+ ************************************************************************************************************)
+
 Fixpoint inject_nat (n : nat) : Q :=
 match n with
 | O => 0
@@ -39,46 +43,6 @@ Proof.
   rewrite (Z.mul_comm B0 C). rewrite (Z.mul_assoc C B0 D). reflexivity.
   repeat rewrite Pos2Z.inj_mul. rewrite H2. rewrite (H2 (Qnum B) _ _ _).
   apply (Zmult_le_compat _ _ _ _ H1 H1); apply (Z.mul_nonneg_nonneg _ _ H (Zle_0_pos _)). Qed.
-(*
- (****************************************************************************************
-    Prove that ZtoNat holds a few properties for proving we can transform from
-    Z.le to <=
-  ****************************************************************************************)
-Lemma ZtoNat_le : forall (A B : Z),
-  Z.le A B -> (Z.to_nat A) <= (Z.to_nat B).
-Proof.
-  intros. destruct A; destruct B; try (apply Z2Nat.inj_le; omega; fail).
-  assert (Z.gt (Z.pos p) Z0). apply Zgt_pos_0. omega.
-  apply Z2Nat.inj_le. assert (Z.gt (Z.pos p) Z0). apply Zgt_pos_0. omega.
-  assert (Z.gt (Z.pos p0) Z0). apply Zgt_pos_0. omega. apply H.
-  assert (H0 := Zgt_pos_0 p). assert (H1 := Zlt_neg_0 p0). omega. reflexivity.
-  simpl. assert (H0 := Zgt_pos_0 p). omega. reflexivity. Qed.
-
-Lemma ZtoNat_plus_le : forall (A B : Z),
-  Z.to_nat (Z.add A B) <= (Z.to_nat A) + (Z.to_nat B).
-Proof.
-  intros. destruct A; destruct B; try (reflexivity).
-  simpl. omega. rewrite Z2Nat.inj_add. omega. assert (H:= Zgt_pos_0 p). omega.
-  assert (H:= Zgt_pos_0 p0). omega.
-  assert (Z.le (Z.add (Z.pos p) (Z.neg p0)) (Z.add (Z.pos p) Z0)). apply Zplus_le_compat_l.
-  assert (H := Zlt_neg_0 p0). omega. apply ZtoNat_le in H. rewrite H. simpl. omega.
-  assert (Z.le (Z.add (Z.neg p) (Z.pos p0)) (Z.add Z0 (Z.pos p0))). apply Zplus_le_compat_r.
-  assert (H := Zlt_neg_0 p). omega. apply ZtoNat_le in H. rewrite H. simpl. omega. Qed.
-
- (****************************************************************************************
-    Simple Arithmetic Facts used in Lower/Upper Bound
-  ****************************************************************************************)
-Lemma square_preserves_le : forall (A B : nat),
-  A <= B -> A*A <= B*B.
-Proof.
-  intros; induction H. omega.
-  simpl. rewrite mult_succ_r. omega. Qed.
-
-Lemma mult_preserves_le : forall (A B C : nat),
-  B <= C -> A*B <= A*C.
-Proof.
-  intros A; induction A; intros. omega.
-  simpl. assert (H0 := IHA B C). omega. Qed. *)
 
  (****************************************************************************************
   Show that any element in MCE must be in T. Therefore properties of elements of T holds
