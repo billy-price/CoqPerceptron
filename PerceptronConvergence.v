@@ -1,77 +1,96 @@
-Require Import ZvecArith PerceptronDef.
+Require Import QArith Qround QvecArith PerceptronDef.
 Require Import TerminationRefinement MCEBounds.
 
-Lemma mult_lt_preserve : forall (A B C: nat),
- A * C > B * C -> A > B.
-Proof.
-  intros A B C. induction C; intros. omega.
-  repeat (rewrite Mult.mult_succ_r in H).
-  simpl in H.
-  omega. Qed.
+Definition Qfloor_nat (q : Q) : nat := Z.to_nat (Qfloor q).
 
-Lemma mult_div_gt : forall (A B: nat),
-  A <> 0 -> A * (NPeano.div B A) + A > B.
+Lemma AB_limit : forall (A B C: Q),
+  0 < A -> 0 < B -> 0 < C -> C > B / A -> A * C *C > B * C.
 Proof.
-  intros. destruct (NPeano.div B A) eqn:H1.
-  apply NPeano.Nat.div_small_iff in H1. omega. omega.
-  assert (H2 := (NPeano.Nat.div_mod B A) H).
-  rewrite H2. rewrite H1. assert (HB: 0 <= B). omega.
-  assert (HA : 0 < A). omega.
-  assert (H3 := (NPeano.mod_bound_pos B A) HB HA). omega. Qed.
+  intros. unfold Qdiv in H2. apply (Qmult_lt_l _ _ A H) in H2.
+  rewrite (Qmult_comm B _) in H2. rewrite Qmult_assoc in H2.
+  rewrite Qmult_inv_r in H2. rewrite Qmult_1_l in H2.
+  apply (Qmult_lt_r _ _ C). apply H1. apply H2. unfold not. intros.
+  apply Qlt_not_le in H. apply H. rewrite H3. apply Qle_refl. Qed.
 
-Lemma AB_limit : forall (A B C: nat),
-  A <> 0 -> B <> 0 -> C > (NPeano.div B A) -> A * C * C > B * C.
+Lemma Qfloor_lt' : forall (x : Q),
+  x < 1 + inject_Z (Qfloor x).
 Proof.
-  intros. induction H1.
-  { repeat (rewrite Mult.mult_succ_r). assert (H1 := (mult_div_gt A B) H).
-    induction H1. destruct (NPeano.div B A). omega.
-    repeat (rewrite Mult.mult_succ_r). simpl. omega.
-    destruct (NPeano.div B A). omega.
-    simpl. omega.
-  } repeat (rewrite Mult.mult_succ_r).
-  rewrite Mult.mult_plus_distr_r.
-  assert (H2 := IHle). apply mult_lt_preserve in H2. omega. Qed.
+  intros. assert (1 = inject_Z 1%Z). reflexivity. rewrite H.
+  rewrite <- inject_Z_plus. rewrite Zplus_comm. apply Qlt_floor. Qed.
+
+Lemma Nat_Z_inj : forall (n : nat),
+  inject_nat n = inject_Z (Z.of_nat n).
+Proof.
+  intros. induction n. reflexivity. simpl.
+  rewrite Zpos_P_of_succ_nat. rewrite <- Z.add_1_l.
+  rewrite inject_Z_plus. rewrite IHn. reflexivity. Qed.
+
+Lemma Z_pos_nat_inj : forall (x : Z),
+  (0 <= x -> Z.of_nat (Z.to_nat x) = x)%Z.
+Proof.
+  intros. induction x. reflexivity. simpl.
+  apply positive_nat_Z. assert (H3 := Zlt_neg_0 p). omega. Qed.
 
  (****************************************************************************************
     Show that MCEBounds -> MCE reaches a fixed point.
   ****************************************************************************************)
-Lemma linearly_separable_MCE : forall {n : nat} (w0 : Zvec (S n)) (T : list ((Zvec n)*bool)),
+Lemma linearly_separable_MCE : forall {n : nat} (w0 : Qvec (S n)) (T : list ((Qvec n)*bool)),
   linearly_separable T -> exists (E0 : nat),
   MCE E0 T w0 = MCE (S E0) T w0.
 Proof.
-  intros. apply (linearly_separable_bound T w0) in H. destruct H as [A [B [C H]]].
-  exists (S (NPeano.div C A)).
-  assert (H0 := (H (S (NPeano.div C A)))).
-  assert (H1 := (MCE_progress (S (NPeano.div C A)) w0 T)).
+  intros. apply (linearly_separable_bound T w0) in H. simpl in H.  destruct H as [A [B [C H]]].
+  exists (S (Qfloor_nat (C / A))).
+  assert (H0 := (H (S (Qfloor_nat (C / A))))).
+  assert (H1 := (MCE_progress (S (Qfloor_nat (C / A))) w0 T)).
   inversion H1.
-  { unfold MCE in H2. inversion H2.
-    { fold (MCE (S (NPeano.div C A)) T w0) in H4.
-      fold (MCE (S (NPeano.div C A)) T w0) in H2. rewrite <- H4 in H0.
-      assert (H3 := (AB_limit A C (S (NPeano.div C A)))).
-      clear - H0 H3.
-      omega.
-    } 
-    fold (MCE (S (NPeano.div C A)) T w0) in H2. fold (MCE (S (NPeano.div C A)) T w0) in H3.
-    rewrite <- H3 in H0.
-    assert (H5 := (AB_limit A C (S m))). clear -H0 H4 H5. omega.
+  {
+    destruct H0 as [HA [HB [HC HAC]]].
+    unfold MCE in H2. inversion H2.
+    { fold (MCE (S (Qfloor_nat (C / A))) T w0) in H3.
+      fold (MCE (S (Qfloor_nat (C / A))) T w0) in H2. rewrite <- H3 in HAC.
+      assert (0 < inject_nat (S (Qfloor_nat (C / A)))). simpl.
+      apply (Qplus_lt_le_compat 0 _ 0 _). reflexivity. apply Qnat_le_0.
+      assert (C / A < inject_nat (S (Qfloor_nat (C / A)))). simpl.
+      rewrite Nat_Z_inj. unfold Qfloor_nat. rewrite Z_pos_nat_inj.
+      apply Qfloor_lt'. assert (0%Z = Qfloor 0). reflexivity.
+      rewrite H4. apply Qfloor_resp_le. apply Qlt_le_weak.
+      unfold Qdiv. rewrite <- (Qmult_0_l (/ A)). apply Qmult_lt_r.
+      apply Qinv_lt_0_compat. apply HA. apply HC.
+      assert (HCA := (AB_limit A C (inject_nat (S (Qfloor_nat (C / A)))) HA HC H0 H4)).
+      clear - HAC HCA. apply Qlt_not_le in HCA. exfalso. apply HCA.
+      destruct HAC as [HleA HleC]. apply (Qle_trans _ _ _ HleA HleC).
+    }
+    fold (MCE (S (Qfloor_nat (C / A))) T w0) in H2. fold (MCE (S (Qfloor_nat (C / A))) T w0) in H0.
+    rewrite <- H0 in HAC. assert (HCA := (AB_limit A C (inject_nat (S m)) HA HC)). exfalso.
+    apply Qlt_not_le in HCA. apply HCA. destruct HAC as [HleA HleC]. apply (Qle_trans _ _ _ HleA HleC).
+    simpl. apply (Qplus_lt_le_compat 0 _ 0 _). reflexivity. apply Qnat_le_0.
+    assert (C / A < inject_nat (S (Qfloor_nat (C / A)))).
+    simpl. rewrite Nat_Z_inj. unfold Qfloor_nat. rewrite Z_pos_nat_inj.
+    apply Qfloor_lt'. assert (0%Z = Qfloor 0). reflexivity.
+    rewrite H4. apply Qfloor_resp_le. apply Qlt_le_weak.
+    unfold Qdiv. rewrite <- (Qmult_0_l (/ A)). apply Qmult_lt_r.
+    apply Qinv_lt_0_compat. apply HA. apply HC. apply (Qlt_trans _ _ _ H4).
+    apply Qnat_lt. apply le_lt_n_Sm. apply H3.
   } apply H2. Qed.
 
  (****************************************************************************************
     Show that perceptron_MCE reaches a fixed point. (MCE fixed point + termination refinement)
   ****************************************************************************************)
-Theorem linearly_separable_perceptron_MCE : forall {n : nat} (w0 : Zvec (S n)) (T : (list ((Zvec n)*bool))),
-  linearly_separable T -> exists (E0 : nat) M (w : (Zvec (S n))), forall E, E > E0 -> perceptron_MCE E T w0 = Some (M, w).
+Theorem linearly_separable_perceptron_MCE : forall {n : nat} (w0 : Qvec (S n)) (T : (list ((Qvec n)*bool))),
+  linearly_separable T ->
+  exists (E0 : nat) M (w : (Qvec (S n))), forall E, (E > E0)%nat -> perceptron_MCE E T w0 = Some (M, w).
 Proof.
   intros. apply linearly_separable_MCE with w0 T in H. destruct H as [E0 H].
-  exists E0. exists (MCE E0 T w0). exists (Zvec_sum_class w0 (MCE E0 T w0)). intros E.
+  exists E0. exists (MCE E0 T w0). exists (Qvec_sum_class w0 (MCE E0 T w0)). intros E.
   intros H1. apply MCE_eq_perceptron_MCE in H. apply perceptron_MCE_done with (S E0). omega. apply H. Qed.
 
  (****************************************************************************************
   (Show that perceptron reaches a fixed point (converges)
     perceptron_MCE reaches a fixed point + termination refinement
  ****************************************************************************************)
-Theorem linearly_separable_perceptron : forall {n : nat} (w0 : Zvec (S n)) (T : (list ((Zvec n)*bool))),
-  linearly_separable T -> exists (E0 : nat) (w : (Zvec (S n))), forall E, E > E0 -> perceptron E T w0 = Some w.
+Theorem linearly_separable_perceptron : forall {n : nat} (w0 : Qvec (S n)) (T : (list ((Qvec n)*bool))),
+  linearly_separable T ->
+  exists (E0 : nat) (w : (Qvec (S n))), forall E, (E > E0)%nat -> perceptron E T w0 = Some w.
 Proof.
   intros. apply linearly_separable_perceptron_MCE with w0 T in H.
   destruct H as [E0 [M [w H]]]. exists E0. exists w. intros. apply H in H0.
