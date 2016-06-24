@@ -125,7 +125,7 @@ Fixpoint Qvec_foil {n:nat} (w : Qvec (S n)) (L: list ((Qvec n)*bool)) : Q :=
   ****************************************************************************************)
 Definition Vector_0_is_nil {A} (v : t A 0) : v = nil A :=
 match v with
-| nil => eq_refl
+| nil _ => eq_refl
 end.
 
 Definition Vector_S_is_cons {A} {n} (v: t A (S n)) : exists a, exists v0, v = cons A a n v0 :=
@@ -133,8 +133,8 @@ match v as v' in t _ n1
   return match n1 return t A n1 -> Prop with
   |O => fun _ => True
   |S n => fun v => exists a, exists v0, v = cons A a n v0 end v' with
-| nil => I
-| cons a _ v0 => ex_intro _ a (ex_intro _ v0 (refl_equal _))
+| nil _ => I
+| cons _ a _ v0 => ex_intro _ a (ex_intro _ v0 (refl_equal _))
 end.
 
 Lemma Vector_S_is_cons' : forall {A : Type} {n : nat} (v : t A (S n)),
@@ -524,7 +524,9 @@ Proof.
 Lemma Qvec_dot_sum_eq : forall {n : nat} (w : Qvec (S n)) (L : list ((Qvec n)*bool)),
   Qvec_dot w (Qvec_sum L) == Qvec_sum_dot w L.
 Proof.
-  intros. induction L. simpl. apply Qvec_dot_Qvec_zero_r. destruct a as [f l].
+  intros. induction L. simpl.
+  rewrite Qvec_dot_Qvec_zero_r. apply Qeq_refl.
+  destruct a as [f l].
   simpl. rewrite Qvec_dot_dist_r. rewrite IHL. reflexivity. Qed.
 
 Lemma Qvec_foil_0_w : forall {n : nat} (v1 v2 : Qvec (S n)) (L : list ((Qvec n)*bool)),
@@ -567,7 +569,8 @@ Proof.
 Lemma Qvec_sum_sum_class : forall {n : nat} (w : Qvec (S n)) (L : list ((Qvec n)*bool)),
   Qvec_plus w (Qvec_sum L) === Qvec_sum_class w L.
 Proof.
-  intros. generalize dependent w; induction L; intros. simpl. apply Qvec_plus_Qvec_zero_r.
+  intros. generalize dependent w; induction L; intros. simpl.
+  rewrite Qvec_plus_Qvec_zero_r. apply Qvec_Eq_refl.
   destruct a as [f l]. simpl. rewrite <- Qvec_plus_assoc. apply IHL. Qed.
 
 Lemma Qvec_sum_class_append : forall {n : nat} (w0: Qvec (S n)) (M1 M2: (list ((Qvec n)*bool))),
