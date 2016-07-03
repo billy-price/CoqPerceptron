@@ -1,13 +1,28 @@
 module Main where
 
 import System.IO
-import Data.IORef
 
-import FueledPerceptron 
+import Perceptron
 
 import Prelude hiding (Bool, True, False)
 import qualified Prelude as P
 
+import Data.Ratio ( (%), numerator, denominator )
+import Data.List ( isInfixOf )
+
+
+-- Assumes string is a string representation of rational or float
+readRational :: String -> Rational
+readRational input =
+  if (isInfixOf "%" input) then
+    read input
+  else
+    ((read intPart)*(10 ^ length fracPart) + (read fracPart)) % (10 ^ length fracPart)
+    where (intPart, fromDot) = span (/='.') input
+          fracPart           = if null fromDot then "0" else tail fromDot
+
+
+-- Assumes z >= 1
 intToPos :: Integral a => a -> Positive
 intToPos z
   | z == 1 = XH
@@ -20,48 +35,54 @@ intToZ z
   | z < 0  = Zneg (intToPos (P.abs z))
   | otherwise = Zpos (intToPos z)
 
--- Assumes z >= 0
+-- Assumes Z >= 0
 intToNat :: Integral a => a -> Nat
 intToNat z
   | z == 0 = O
   | otherwise = S (intToNat (z-1))
 
+-- See Assumptions for intToZ and intToPos
+ratToQ :: Rational -> Q
+ratToQ q =
+  Qmake (intToZ (numerator q)) (intToPos (denominator q))
+
 debug = P.False
 
 -- Not tail-recursive...should rewrite to use an acc.
-read_vec :: Nat -> IO (Prod Zvec Bool)
+read_vec :: Nat -> IO ((,) Qvec P.Bool)
 read_vec nfeats =
   do { lbl <- hGetLine stdin
-     ; let l = if read lbl == 0 then False else True -- no error-handling here
+     ; let l = if read lbl == 0 then P.False else P.True -- no error-handling here
      ; if debug then do { putStr "label = "; putStrLn (show lbl) } else return ()
      ; res <- go nfeats
-     ; return (Pair res l)
-     } 
-     where go :: Nat -> IO Zvec
+     ; return (res, l)
+     }
+     where go :: Nat -> IO Qvec
            go n =
              case n of
-               O -> return Nil0
+               O -> return []
                S n' ->
                  do { feat <- hGetLine stdin
                     ; if debug then do { putStr "feat = "; putStrLn (show feat) } else return ()
                     ; rest <- go n'
-                    ; return $ Cons0 (intToZ (read feat)) n' rest
-                    } 
+                    ; return $ (:) (ratToQ (readRational feat)) rest
+                    }
 
-read_vecs :: Int -> Int -> IO (List (Prod Zvec Bool))
+read_vecs :: Int -> Int -> IO (([]) ((,) Qvec P.Bool))
 read_vecs nvecs nfeats
-  | nvecs <= 0 = return Nil
+  | nvecs <= 0 = return []
   | otherwise
-  = do { v <- read_vec (intToNat nfeats)
-       ; rest <- read_vecs (nvecs-1) nfeats       
-       ; return $ Cons v rest 
+  = do { let feats = intToNat nfeats
+       ; v <- read_vec feats
+       ; rest <- read_vecs (nvecs-1) nfeats
+       ; return $ (:) v rest
        }
 
-zero_vec :: Nat -> Zvec
-zero_vec O = Nil0
-zero_vec (S n') = Cons0 Z0 n' (zero_vec n')
+zero_vec :: Nat -> Qvec
+zero_vec O = []
+zero_vec (S n') = (:) (Qmake Z0 XH) (zero_vec n')
 
-main =
+main = 
   do { num_vecs  <- hGetLine stdin
      ; if debug then do { putStr "num_vecs = "; putStrLn (show num_vecs) } else return ()
      ; num_feats <- hGetLine stdin
@@ -69,9 +90,9 @@ main =
      ; let nvecs  = read num_vecs
      ; let nfeats = read num_feats
      ; vs <- read_vecs nvecs nfeats
-     ; let w = Cons0 (intToZ 10000) (intToNat nfeats) (zero_vec (intToNat nfeats))
-     ; let res = fueled_perceptron O (Pair vs w)
+     ; let w = zero_vec (S (intToNat nfeats))
+     ; let res = fueled_perceptron (intToNat nfeats) O vs w
      ; case res of
-         Nil0 -> putStrLn "Nil0"
-         Cons0 {} -> putStrLn "Cons0"
-     } 
+         None -> putStrLn "None"
+         Some {} -> putStrLn "Some"
+     }
