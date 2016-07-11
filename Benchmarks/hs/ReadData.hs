@@ -104,3 +104,27 @@ qToRat r =
   case r of
     Qmake z p -> (zToInt z)%(posToInt p)
 
+printQvec :: Qvec -> IO ()
+printQvec qv =
+  do { 
+     ; putStr "<"
+     ; go qv
+     ; putStr ">"
+     }
+     where go :: Qvec -> IO ()
+           go qv =
+             case qv of
+               (:) q [] -> putStr (show (qToRat q))
+               (:) q qv' -> do { putStr (show (qToRat q)); putStr ", "; go qv' }
+
+printQvecL :: ([]) ((,) Qvec P.Bool) -> IO ()
+printQvecL l =
+  case l of
+    [] -> putStr ""
+    (:) ((,) qv lbl) l' -> do { putStr "("
+                              ; printQvec qv
+                              ; putStr ", "
+                              ; putStr (show lbl)
+                              ; putStrLn ")"
+                              ; printQvecL l'
+                              }

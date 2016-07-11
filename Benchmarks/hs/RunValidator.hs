@@ -17,5 +17,11 @@ main =
      ; let res = inner_perceptron_MCE (intToNat nfeats) vs w
      ; case res of
          None -> putStrLn "Valid Separator"
-         Some {} -> putStrLn "Invalid Separator"
+         Some ((,) l w) -> do { putStrLn "Invalid Seperator"
+                              ; putStrLn "Running 1 iteration of Perceptron produces the following misclassifications"
+                              ; printQvecL l
+                              ; putStrLn "Resulting in the following weight vector"
+                              ; printQvec w
+                              ; putStrLn ""
+                              }
      }
