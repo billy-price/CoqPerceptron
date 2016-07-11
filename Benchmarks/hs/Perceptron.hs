@@ -320,6 +320,23 @@ perceptron n e t w =
      Some w' -> perceptron n e' t w';
      None -> Some w}}
 
+inner_perceptron_MCE :: Nat -> (([]) ((,) Qvec Prelude.Bool)) -> Qvec -> Option
+                        ((,) (([]) ((,) Qvec Prelude.Bool)) Qvec)
+inner_perceptron_MCE n t w =
+  case t of {
+   [] -> None;
+   (:) p t' ->
+    case p of {
+     (,) f l ->
+      case correct_class (qvec_dot (S n) w (consb n f)) l of {
+       Prelude.True -> inner_perceptron_MCE n t' w;
+       Prelude.False ->
+        case inner_perceptron_MCE n t' (qvec_plus (S n) w (qvec_mult_class (S n) l (consb n f))) of {
+         Some p0 ->
+          case p0 of {
+           (,) l0 w' -> Some ((,) ((:) ((,) f l) l0) w')};
+         None -> Some ((,) ((:) ((,) f l) []) (qvec_plus (S n) w (qvec_mult_class (S n) l (consb n f))))}}}}
+
 gas :: (Nat -> a1) -> a1
 gas = (\f -> let infiniteGas = S infiniteGas in f infiniteGas)
 

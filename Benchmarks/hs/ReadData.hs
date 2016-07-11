@@ -1,4 +1,4 @@
-module Main where
+module ReadData where
 
 import System.IO
 
@@ -49,24 +49,25 @@ ratToQ q =
 debug = P.False
 
 -- Not tail-recursive...should rewrite to use an acc.
+read_vec' :: Nat -> IO Qvec
+read_vec' n =
+  case n of
+    O -> return []
+    S n' ->
+      do { feat <- hGetLine stdin
+         ; if debug then do { putStr "feat = "; putStrLn (show feat) } else return ()
+         ; rest <- read_vec' n'
+         ; return $ (:) (ratToQ (readRational feat)) rest
+         }
+
 read_vec :: Nat -> IO ((,) Qvec P.Bool)
 read_vec nfeats =
   do { lbl <- hGetLine stdin
      ; let l = if read lbl == 0 then P.False else P.True -- no error-handling here
      ; if debug then do { putStr "label = "; putStrLn (show lbl) } else return ()
-     ; res <- go nfeats
+     ; res <- read_vec' nfeats
      ; return (res, l)
      }
-     where go :: Nat -> IO Qvec
-           go n =
-             case n of
-               O -> return []
-               S n' ->
-                 do { feat <- hGetLine stdin
-                    ; if debug then do { putStr "feat = "; putStrLn (show feat) } else return ()
-                    ; rest <- go n'
-                    ; return $ (:) (ratToQ (readRational feat)) rest
-                    }
 
 read_vecs :: Int -> Int -> IO (([]) ((,) Qvec P.Bool))
 read_vecs nvecs nfeats
@@ -82,17 +83,24 @@ zero_vec :: Nat -> Qvec
 zero_vec O = []
 zero_vec (S n') = (:) (Qmake Z0 XH) (zero_vec n')
 
-main = 
-  do { num_vecs  <- hGetLine stdin
-     ; if debug then do { putStr "num_vecs = "; putStrLn (show num_vecs) } else return ()
-     ; num_feats <- hGetLine stdin
-     ; if debug then do { putStr "num_feats = "; putStrLn (show num_feats) } else return ()
-     ; let nvecs  = read num_vecs
-     ; let nfeats = read num_feats
-     ; vs <- read_vecs nvecs nfeats
-     ; let w = zero_vec (S (intToNat nfeats))
-     ; let res = fueled_perceptron (intToNat nfeats) O vs w
-     ; case res of
-         None -> putStrLn "None"
-         Some {} -> putStrLn "Some"
-     }
+
+-- Functionality to Convert from Q to Rat and Print Qvecs and Lists of Qvecs
+posToInt :: Positive -> Integer
+posToInt p =
+  case p of
+    XH -> 1
+    XI p' -> (2 * (posToInt p'))
+    XO p' -> (2 * (posToInt p'))
+
+zToInt :: Z -> Integer
+zToInt z =
+  case z of
+    Z0 -> 0
+    Zneg p -> (- posToInt p)
+    Zpos p -> (posToInt p)
+
+qToRat :: Q -> Rational
+qToRat r =
+  case r of
+    Qmake z p -> (zToInt z)%(posToInt p)
+
