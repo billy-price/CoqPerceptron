@@ -34,4 +34,4 @@ Definition fueled_perceptron
   : option (Qvec (S n)) :=
   gas (fun fuel => perceptron fuel T w).
 
-Extraction "Benchmarks/hs/Perceptron.hs" fueled_perceptron.
+Extraction "/home/charlie/CoqPerceptron/Benchmarks/hs/Perceptron.hs" fueled_perceptron inner_perceptron_MCE.
