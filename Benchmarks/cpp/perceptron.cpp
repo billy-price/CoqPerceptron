@@ -1,3 +1,40 @@
+/***************************************************************************************
+    File: perceptron.cpp
+
+    Description:
+      Runs an arbitrary-precision rational valued perceptron algorithm.
+      This program will infinite loop if the dataset is not linearly separable.
+      Reads input from stdin and outputs to stdout.
+
+    Input: a training set
+    Example:
+
+    2     // number of training vectors
+    2     // number of features per vector
+    1     // label 1
+    1/2   // vector 1, feature 1
+    1.2   // vector 1, feature 2
+    0     // label 2
+    0     // vector 2, feature 1
+    1%3   // vector 2, feature 2
+
+    resulting in the following vectors:
+      <1 % 1, 1 % 2, 6 % 5> and <-1 % 1, 0 % 1, 1 % 3>
+      // both % & / can be used as fraction.
+      // labels are transformed from {0, 1} to {-1, 1} and appended to front of vectors.
+
+    Output:
+      This program will either infinite loop or termintate after outputing a weight
+      vector representing the hyperplane sperating the data (1 feature per line).
+
+    Example output (for the above example input).
+    -1 % 1
+    1 % 1
+    7 % 5
+
+    which represents the following 2D line.
+    y = -7/5x - 1/||<1 % 1, 7 % 5>||
+ ***************************************************************************************/
 #include <iostream>
 #include <string>
 #include <vector>
@@ -130,6 +167,7 @@ Qvec perceptron(const std::vector<Qvec>& features, const std::vector<int>& label
   size_t fuel = 0;
   bool converged;
   do {
+    ++fuel;
     converged = true;
 
     for (std::size_t i = 0; i < features.size(); ++i){
@@ -141,5 +179,6 @@ Qvec perceptron(const std::vector<Qvec>& features, const std::vector<int>& label
       }
     }
   } while (!converged);
+  std::cerr << "Fuel: " << fuel << std::endl;
   return weights;
 }

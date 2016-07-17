@@ -19,7 +19,7 @@ perceptron: perceptron.cpp
 	$(COMPILE) -lgmp
 
 data_generator: data_generator.cpp
-	$(COMPILE)
+	$(COMPILE) -lgmp
 
 makeplotfiles: makeplotfiles.cpp
 	$(COMPILE)
