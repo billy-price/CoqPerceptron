@@ -18,5 +18,5 @@ main =
      ; case res of
          None -> putStrLn "None" -- fueled_perceptron runs on infinite gas 
                                  -- (None should never be reached)
-         Some w -> do { printQvec w; putStrLn "" }
+         Some w -> putQvec w
      }

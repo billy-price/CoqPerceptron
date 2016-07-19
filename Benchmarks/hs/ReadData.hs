@@ -89,7 +89,7 @@ posToInt :: Positive -> Integer
 posToInt p =
   case p of
     XH -> 1
-    XI p' -> (2 * (posToInt p'))
+    XI p' -> (2 * (posToInt p') + 1)
     XO p' -> (2 * (posToInt p'))
 
 zToInt :: Z -> Integer
@@ -117,6 +117,12 @@ printQvec qv =
                (:) q [] -> putStr (show (qToRat q))
                (:) q qv' -> do { putStr (show (qToRat q)); putStr ", "; go qv' }
 
+putQvec :: Qvec -> IO ()
+putQvec qv =
+  case qv of
+    [] -> putStr ""
+    (:) q qv' -> do { putStrLn (show (qToRat q)); putQvec qv' }
+
 printQvecL :: ([]) ((,) Qvec P.Bool) -> IO ()
 printQvecL l =
   case l of
@@ -127,4 +133,13 @@ printQvecL l =
                               ; putStr (show lbl)
                               ; putStrLn ")"
                               ; printQvecL l'
+                              }
+
+putQvecL :: ([]) ((,) Qvec P.Bool) -> IO ()
+putQvecL l =
+  case l of
+    [] -> putStr ""
+    (:) ((,) qv lbl) l' -> do { if lbl == P.True then putStrLn "1" else putStrLn "0"
+                              ; putQvec qv
+                              ; putQvecL l'
                               }
