@@ -122,6 +122,9 @@ std::istream& operator >> (std::istream& ins, Q& q){
     for (std::size_t i = 0; i < D.length(); ++i){ // pow doesn't work (it has limited precision)
       d *= 10;
     }
+    while (D[0] == '0'){
+      D = D.substr(1);
+    }
     n = Z(N)*d + Z(D);
   } else { // integral
     n = Z(num);
