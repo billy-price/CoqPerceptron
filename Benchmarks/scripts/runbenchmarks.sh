@@ -49,7 +49,7 @@ do
   fi
   for j in `seq 1 10`;
   do
-    TIMEFORMAT="%lR"; time ($1 < $2/feat${i}_$j.dat > ${3}/feat${i}_$j 2>> "fout") 2>&1
+    TIMEFORMAT="%lR"; time ($1 < $2/feat${i}_$j.dat > ${3}/feat${i}_$j 2>> "$fout") 2>&1
     if [ -n "$5" ]
     then
       TIMEFORMAT="%lR"; time (cat $2/feat${i}_$j.dat ${3}/feat${i}_$j | $5 >> "$6")
