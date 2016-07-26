@@ -9,21 +9,24 @@ Proof.
   intros. unfold Qdiv in H2. apply (Qmult_lt_l _ _ A H) in H2.
   rewrite (Qmult_comm B _) in H2. rewrite Qmult_assoc in H2.
   rewrite Qmult_inv_r in H2. rewrite Qmult_1_l in H2.
-  apply (Qmult_lt_r _ _ C). apply H1. apply H2. unfold not. intros.
+  apply (Qmult_lt_r _ _ C H1) in H2. unfold Qmult;
+  repeat rewrite Qred_correct. apply H2. unfold not. intros.
   apply Qlt_not_le in H. apply H. rewrite H3. apply Qle_refl. Qed.
 
 Lemma Qfloor_lt' : forall (x : Q),
   x < 1 + inject_Z (Qfloor x).
 Proof.
   intros. assert (1 = inject_Z 1%Z). reflexivity. rewrite H.
+  unfold Qplus; rewrite Qred_correct.
   rewrite <- inject_Z_plus. rewrite Zplus_comm. apply Qlt_floor. Qed.
 
 Lemma Nat_Z_inj : forall (n : nat),
-  inject_nat n = inject_Z (Z.of_nat n).
+  inject_nat n == inject_Z (Z.of_nat n).
 Proof.
   intros. induction n. reflexivity. simpl.
   rewrite Zpos_P_of_succ_nat. rewrite <- Z.add_1_l.
-  rewrite inject_Z_plus. rewrite IHn. reflexivity. Qed.
+  rewrite inject_Z_plus. rewrite IHn. unfold Qplus.
+  rewrite Qred_correct. reflexivity. Qed.
 
 Lemma Z_pos_nat_inj : forall (x : Z),
   (0 <= x -> Z.of_nat (Z.to_nat x) = x)%Z.
@@ -49,6 +52,7 @@ Proof.
     { fold (MCE (S (Qfloor_nat (C / A))) T w0) in H3.
       fold (MCE (S (Qfloor_nat (C / A))) T w0) in H2. rewrite <- H3 in HAC.
       assert (0 < inject_nat (S (Qfloor_nat (C / A)))). simpl.
+      unfold Qplus; rewrite Qred_correct.
       apply (Qplus_lt_le_compat 0 _ 0 _). reflexivity. apply Qnat_le_0.
       assert (C / A < inject_nat (S (Qfloor_nat (C / A)))). simpl.
       rewrite Nat_Z_inj. unfold Qfloor_nat. rewrite Z_pos_nat_inj.
@@ -63,7 +67,8 @@ Proof.
     fold (MCE (S (Qfloor_nat (C / A))) T w0) in H2. fold (MCE (S (Qfloor_nat (C / A))) T w0) in H0.
     rewrite <- H0 in HAC. assert (HCA := (AB_limit A C (inject_nat (S m)) HA HC)). exfalso.
     apply Qlt_not_le in HCA. apply HCA. destruct HAC as [HleA HleC]. apply (Qle_trans _ _ _ HleA HleC).
-    simpl. apply (Qplus_lt_le_compat 0 _ 0 _). reflexivity. apply Qnat_le_0.
+    simpl. unfold Qplus; rewrite Qred_correct.
+    apply (Qplus_lt_le_compat 0 _ 0 _). reflexivity. apply Qnat_le_0.
     assert (C / A < inject_nat (S (Qfloor_nat (C / A)))).
     simpl. rewrite Nat_Z_inj. unfold Qfloor_nat. rewrite Z_pos_nat_inj.
     apply Qfloor_lt'. assert (0%Z = Qfloor 0). reflexivity.

@@ -56,6 +56,12 @@ Proof.
     (Also includes Fixpoints/Computation on Training Data: list ((Qvec n)*bool))
  *****************************************************************************************)
 
+(** Hacking this to avoid changing everything. Always normalize/reduce after plus and mult **)
+Definition Qplus (a b : Q) : Q := Qred (Qplus a b).
+Infix "+" := Qplus : Q_scope.
+Definition Qmult (a b : Q) : Q := Qred (Qmult a b).
+Infix "*" := Qmult : Q_scope.
+
 Definition Qvec := Vector.t Q.
 Definition Qvec_plus {n:nat} (v1 v2 : Qvec n) := map2 Qplus v1 v2.
 Definition Qvec_dot {n:nat} (v1 v2 : Qvec n) := fold_left Qplus 0 (map2 Qmult v1 v2).
@@ -250,9 +256,10 @@ Proof.
   intros n v1 v2. set (P := fun {n : nat} (v1 v2 : Qvec n) => forall A : Q,
   Qeq (fold_left Qplus A (map2 Qmult v1 v2)) (Qplus A (fold_left Qplus 0 (map2 Qmult v1 v2)))).
   change (P n v1 v2). apply mutual_induction; unfold P; intros; clear P.
-  simpl. symmetry. apply Qplus_0_r.
-  simpl. rewrite (H (A + h1 * h2)). rewrite (H (0 + h1*h2)). rewrite Qplus_0_l.
-  rewrite Qplus_assoc. reflexivity. Qed.
+  simpl. unfold Qplus; rewrite Qplus_0_r. symmetry. apply Qred_correct.
+  simpl. rewrite (H (A + h1 * h2)). rewrite (H (0 + h1*h2)).
+  unfold Qplus. rewrite Qplus_0_l. repeat rewrite Qred_correct. rewrite Qplus_assoc.
+  reflexivity. Qed.
 
 Instance Qvec_dot_comp : forall {n : nat},
   Proper (Qvec_Eq==>Qvec_Eq==>Qeq) (Qvec_dot (n := n)).
@@ -335,29 +342,30 @@ Proof.
 (****************************************************************************************
     Proofs about Arithmetic on Qvec, Fixpoints/Computations on Qvecs / Training Data.
  ****************************************************************************************)
-Lemma Qvec_consb_gt_0 : forall {n : nat} (f : Qvec n),
- Qvec_normsq (consb f) > 0.
-Proof.
-  intros n f. unfold Qvec_normsq. unfold Qvec_dot. unfold consb. simpl.
-  rewrite fold_left_add_unfold. rewrite Qmult_1_r. rewrite Qplus_0_l.
-  induction f; simpl. { reflexivity. }
-  rewrite fold_left_add_unfold. rewrite Qplus_0_l. rewrite (Qplus_comm (h*h) _).
-  rewrite Qplus_assoc. apply (Qplus_lt_le_compat 0 _ 0 (h * h) IHf).
-  apply Qsquare_nonneg. Qed.
-
 Lemma Qvec_normsq_nonneg : forall {n : nat} (f : Qvec n),
  0 <= (Qvec_normsq f).
 Proof.
   intros. induction f; unfold Qvec_normsq, Qvec_dot. unfold Qle. reflexivity.
   simpl. rewrite fold_left_add_unfold. fold (Qvec_dot f f). fold (Qvec_normsq f).
-  rewrite Qplus_0_l. apply (Qplus_le_compat 0 (h*h) 0 _ (Qsquare_nonneg h) IHf). Qed.
+  unfold Qplus, Qmult; repeat rewrite Qred_correct. rewrite Qplus_0_l.
+  apply (Qplus_le_compat 0 _ 0). apply Qsquare_nonneg. apply IHf. Qed.
+
+Lemma Qvec_consb_gt_0 : forall {n : nat} (f : Qvec n),
+ Qvec_normsq (consb f) > 0.
+Proof.
+  intros n f. unfold Qvec_normsq. unfold Qvec_dot. unfold consb. simpl.
+  rewrite fold_left_add_unfold. assert (0 + 1 * 1 == 1). unfold Qmult, Qplus;
+  rewrite Qred_correct. simpl. apply Qplus_0_l. rewrite H; clear H.
+  fold (Qvec_dot f f). fold (Qvec_normsq f). rewrite <- Qplus_0_r.
+  unfold Qplus; rewrite Qred_correct. apply (Qplus_lt_le_compat 0 _ 0). reflexivity.
+  apply Qvec_normsq_nonneg. Qed.
 
 Lemma Qvec_sum_normsq_nonneg : forall {n : nat} (L : list ((Qvec n)*bool)),
   0 <= (Qvec_sum_normsq L).
 Proof.
   intros. induction L. unfold Qle. reflexivity.
   destruct a as [f l]. simpl. assert (H := Qvec_normsq_nonneg (consb f)).
-  apply (Qplus_le_compat 0 _ 0 _ H IHL). Qed.
+  unfold Qplus; rewrite Qred_correct. apply (Qplus_le_compat 0 _ 0 _ H IHL). Qed.
 
 Lemma Qvec_normsq_Qvec_0 : forall (n : nat),
  Qvec_normsq (Qvec_zero n) == 0.
@@ -374,6 +382,7 @@ Proof.
   fold (Qvec_dot (map (Qmult (-1#1)) f) (map (Qmult (-1#1)) f)).
   fold (Qvec_normsq (map (Qmult (-1#1)) f)). repeat rewrite Qplus_0_l.
   assert (Qopp 1 = (-1#1)). reflexivity. repeat rewrite <- H.
+  unfold Qmult, Qplus; repeat rewrite Qred_correct.
   rewrite <- Qopp_mult_distr_l. repeat rewrite Qmult_1_l.
   rewrite <- Qopp_mult_distr_l. rewrite <- Qopp_mult_distr_r. rewrite Qopp_involutive.
   rewrite IHf. rewrite <- H. reflexivity. Qed.
@@ -384,13 +393,15 @@ Proof.
   intros n v1 v2. set (P := fun (n : nat) (v1 v2 : t Q n) =>
   Qvec_dot v1 (map (Qmult (-1#1)) v2) == Qmult (-1#1) (Qvec_dot v1 v2)).
   change (P n v1 v2). apply mutual_induction; unfold P; clear P.
-  { unfold Qvec_dot. simpl. rewrite Qmult_0_r. reflexivity. }
+  { unfold Qvec_dot, Qmult, Qplus. simpl. reflexivity. }
   intros. unfold Qvec_dot. simpl. rewrite fold_left_add_unfold.
-  rewrite (fold_left_add_unfold t1 t2 _). fold (Qvec_dot t1 t2). rewrite Qplus_0_l.
+  rewrite (fold_left_add_unfold t1 t2 _). fold (Qvec_dot t1 t2).
+  unfold Qplus, Qmult; repeat rewrite Qred_correct. rewrite Qplus_0_l.
   rewrite Qplus_0_l. assert (-1#1 = Qopp 1). reflexivity. rewrite H0.
   rewrite <- Qopp_mult_distr_l. rewrite <- Qopp_mult_distr_r. rewrite Qmult_1_l.
   rewrite <- Qopp_mult_distr_l. rewrite Qmult_1_l. rewrite Qopp_plus.
-  rewrite H0 in H. rewrite <- Qopp_mult_distr_l in H. rewrite Qmult_1_l in H.
+  rewrite H0 in H. unfold Qmult, Qplus in H. repeat rewrite Qred_correct in H.
+  rewrite <- Qopp_mult_distr_l in H. rewrite Qmult_1_l in H.
   rewrite <- H. unfold Qvec_dot. reflexivity. Qed.
 
 Lemma Qvec_dot_add_sub_mult_eq : forall {n : nat} (v1 v2 v3 : Qvec n),
@@ -400,29 +411,30 @@ Proof.
   Qminus (Qvec_dot (Qvec_plus v1 v3) v2) (Qvec_dot v3 v2)). change (P n v1 v2 v3).
   apply triple_induction; unfold P; clear P; intros; unfold Qvec_dot.
   { reflexivity. }
-  simpl. rewrite fold_left_add_unfold. fold (Qvec_dot t1 t2). rewrite Qplus_0_l.
+  simpl. rewrite fold_left_add_unfold. fold (Qvec_dot t1 t2).
+  unfold Qplus, Qmult; repeat rewrite Qred_correct. rewrite Qplus_0_l.
   rewrite fold_left_add_unfold. fold (Qvec_dot (Qvec_plus t1 t3) t2).
   rewrite Qplus_0_l. rewrite fold_left_add_unfold. fold (Qvec_dot t3 t2).
-  rewrite Qplus_0_l. unfold Qminus. rewrite Qopp_plus.
-  rewrite <- Qplus_assoc. rewrite (Qplus_comm (Qopp _) (Qopp _)).
+  rewrite Qplus_0_l. unfold Qminus, Qplus. repeat rewrite Qred_correct.
+  rewrite Qopp_plus. rewrite <- Qplus_assoc. rewrite (Qplus_comm (Qopp _) (Qopp _)).
   rewrite (Qplus_assoc (Qvec_dot _ _) (Qopp _) (Qopp _)).
-  rewrite (Qplus_comm (Qplus _ _) (Qopp _)).
+  rewrite (Qplus_comm (_ _ _) (Qopp _)).
   fold (Qminus (Qvec_dot (Qvec_plus t1 t3) t2) (Qvec_dot t3 t2)).
   rewrite <- H. rewrite Qplus_assoc. rewrite Qmult_plus_distr_l.
-  repeat rewrite <- Qplus_assoc. rewrite (Qplus_assoc (h3 * h2) _ _).
+  repeat rewrite <- Qplus_assoc. rewrite (Qplus_assoc (_ h3 h2) _ _).
   rewrite Qplus_opp_r. rewrite Qplus_0_l. reflexivity. Qed.
 
 Lemma Qvec_normsq_cons : forall {n : nat} (h : Q) (t : Qvec n),
   Qvec_normsq (cons Q h n t) == Qplus (Qmult h h) (Qvec_normsq t).
 Proof.
   intros. unfold Qvec_normsq, Qvec_dot. simpl. rewrite fold_left_add_unfold.
-  rewrite Qplus_0_l. reflexivity. Qed.
+  unfold Qplus, Qmult; repeat rewrite Qred_correct. rewrite Qplus_0_l. reflexivity. Qed.
 
 Lemma Qvec_dot_cons : forall {n : nat} (h1 h2 : Q) (t1 t2 : Qvec n),
   Qvec_dot (cons Q h1 n t1) (cons Q h2 n t2) == Qplus (Qmult h1 h2) (Qvec_dot t1 t2).
 Proof.
   intros. unfold Qvec_dot. simpl. rewrite fold_left_add_unfold.
-  rewrite Qplus_0_l. reflexivity. Qed.
+  unfold Qplus, Qmult; repeat rewrite Qred_correct. rewrite Qplus_0_l. reflexivity. Qed.
 
 Lemma Qvec_normsq_plus : forall {n: nat} (v1 v2 : Qvec n),
   Qvec_normsq (Qvec_plus v1 v2) == Qplus (Qplus (Qvec_normsq v1) (Qmult (2#1) (Qvec_dot v1 v2))) (Qvec_normsq v2).
@@ -431,13 +443,15 @@ Proof.
   Qplus (Qplus (Qvec_normsq v1) (Qmult (2#1) (Qvec_dot v1 v2))) (Qvec_normsq v2)).
   change (P n v1 v2). apply mutual_induction; unfold P; intros. reflexivity.
   unfold Qvec_plus. simpl. repeat rewrite Qvec_normsq_cons. rewrite Qvec_dot_cons.
-  fold (Qvec_plus t1 t2). rewrite (Qmult_plus_distr_r (2#1) _ _).
-  repeat rewrite <- Qplus_assoc. rewrite (Qplus_assoc _ (h2*h2) _). rewrite (Qplus_comm _ (h2*h2)).
-  rewrite (Qplus_assoc _ ((2#1)*(h1*h2)) _). rewrite (Qplus_comm (Qvec_normsq t1) _).
+  fold (Qvec_plus t1 t2). unfold Qplus, Qmult; repeat rewrite Qred_correct.
+  rewrite (Qmult_plus_distr_r (2#1)). repeat rewrite <- Qplus_assoc.
+  rewrite (Qplus_assoc _  _ (Qvec_normsq t2)). rewrite (Qplus_comm (_ (2#1) (Qvec_dot t1 t2))).
+  rewrite (Qplus_assoc (Qvec_normsq t1)). rewrite (Qplus_comm (Qvec_normsq t1) _).
   rewrite <- Qplus_assoc. repeat rewrite (Qplus_assoc (Qvec_normsq t1) _ _).
   rewrite (Qplus_comm (Qvec_normsq t1)). repeat rewrite <- Qplus_assoc.
-  rewrite (Qplus_assoc (Qvec_normsq t1) _ _). rewrite <- H.
-  repeat rewrite Qplus_assoc. rewrite Qmult_plus_distr_l. repeat rewrite Qmult_plus_distr_r.
+  rewrite (Qplus_assoc (Qvec_normsq t1) _ _). unfold Qplus, Qmult in H;
+  repeat rewrite Qred_correct in H; rewrite <- H. repeat rewrite Qplus_assoc.
+  rewrite Qmult_plus_distr_l. repeat rewrite Qmult_plus_distr_r.
   rewrite (Qmult_comm h2 h1). rewrite <- Qplus_diag_eq_mult_2.
   repeat rewrite Qplus_assoc. reflexivity. Qed.
 
@@ -445,14 +459,16 @@ Lemma Qvec_dot_Qvec_zero_l : forall {n : nat} (v : Qvec n),
   Qvec_dot (Qvec_zero n) v == 0.
 Proof.
   intros. induction v; unfold Qvec_dot. reflexivity.
-  simpl. rewrite fold_left_add_unfold. rewrite Qplus_0_l.
+  simpl. rewrite fold_left_add_unfold. unfold Qplus, Qmult;
+  repeat rewrite Qred_correct; rewrite Qplus_0_l.
   rewrite Qmult_0_l. rewrite Qplus_0_l. apply IHv. Qed.
 
 Lemma Qvec_dot_Qvec_zero_r : forall {n : nat} (v : Qvec n),
   Qvec_dot v (Qvec_zero n) == 0.
 Proof.
   intros. induction v; unfold Qvec_dot. reflexivity.
-  simpl. rewrite fold_left_add_unfold. rewrite Qplus_0_l.
+  simpl. rewrite fold_left_add_unfold. unfold Qplus, Qmult;
+  repeat rewrite Qred_correct; rewrite Qplus_0_l.
   rewrite Qmult_0_r. rewrite Qplus_0_l. apply IHv. Qed.
 
 Lemma Qvec_plus_Qvec_zero : forall {n : nat} (v : Qvec n),
@@ -460,14 +476,16 @@ Lemma Qvec_plus_Qvec_zero : forall {n : nat} (v : Qvec n),
 Proof.
   intros. induction v; unfold Qvec_plus. reflexivity.
   simpl. fold (Qvec_zero n). fold (Qvec_plus (Qvec_zero n) v).
-  apply QCons. apply IHv. apply Qplus_0_l. Qed.
+  apply QCons. apply IHv. unfold Qplus; rewrite Qred_correct;
+  apply Qplus_0_l. Qed.
 
 Lemma Qvec_plus_Qvec_zero_r : forall {n : nat} (v : Qvec n),
   Qvec_plus v (Qvec_zero n) === v.
 Proof.
   intros. induction v; unfold Qvec_plus. reflexivity.
   simpl. fold (Qvec_zero n). fold (Qvec_plus v (Qvec_zero n)).
-  apply QCons. apply IHv. apply Qplus_0_r. Qed.
+  apply QCons. apply IHv. unfold Qplus; rewrite Qred_correct;
+  apply Qplus_0_r. Qed.
 
 Lemma Qvec_dot_dist_l : forall {n : nat} (v1 v2 v3 : Qvec n),
   Qvec_dot (Qvec_plus v1 v2) v3 == Qplus (Qvec_dot v1 v3) (Qvec_dot v2 v3).
@@ -475,10 +493,11 @@ Proof.
   intros. set (P := fun {n} (v1 v2 v3 : Qvec n) =>
   Qvec_dot (Qvec_plus v1 v2) v3 == Qplus (Qvec_dot v1 v3) (Qvec_dot v2 v3)).
   change (P n v1 v2 v3). apply triple_induction; unfold P; intros. reflexivity.
-  simpl. repeat rewrite Qvec_dot_cons. rewrite H. rewrite Qmult_plus_distr_l.
+  simpl. repeat rewrite Qvec_dot_cons. rewrite H. unfold Qplus, Qmult;
+  repeat rewrite Qred_correct; rewrite Qmult_plus_distr_l.
   repeat rewrite <- Qplus_assoc. rewrite (Qplus_assoc (Qvec_dot t1 t3) _ _).
-  rewrite (Qplus_comm (Qvec_dot t1 t3) (h2*h3)). repeat rewrite Qplus_assoc.
-  reflexivity. Qed.
+  rewrite (Qplus_comm (Qvec_dot t1 t3) (QArith_base.Qmult h2 h3)).
+  repeat rewrite Qplus_assoc. reflexivity. Qed.
 
 Lemma Qvec_dot_dist_r : forall {n : nat} (v1 v2 v3 : Qvec n),
   Qvec_dot v1 (Qvec_plus v2 v3) == Qplus (Qvec_dot v1 v2) (Qvec_dot v1 v3).
@@ -486,9 +505,10 @@ Proof.
   intros. set (P := fun {n} (v1 v2 v3 : Qvec n) =>
   Qvec_dot v1 (Qvec_plus v2 v3) == Qplus (Qvec_dot v1 v2) (Qvec_dot v1 v3)).
   change (P n v1 v2 v3). apply triple_induction; unfold P; clear P; intros. reflexivity.
-  simpl. repeat rewrite Qvec_dot_cons. rewrite Qmult_plus_distr_r. rewrite H.
-  repeat rewrite <- Qplus_assoc. rewrite (Qplus_assoc (Qvec_dot t1 t2) _ _).
-  rewrite (Qplus_comm (Qvec_dot t1 t2) (h1*h3)). repeat rewrite Qplus_assoc. reflexivity. Qed.
+  simpl. repeat rewrite Qvec_dot_cons. rewrite H. unfold Qplus, Qmult; repeat rewrite Qred_correct;
+  rewrite Qmult_plus_distr_r. repeat rewrite <- Qplus_assoc.
+  rewrite (Qplus_assoc (Qvec_dot t1 t2) _ _). rewrite (Qplus_comm (Qvec_dot t1 t2)
+  (QArith_base.Qmult h1 h3)). repeat rewrite Qplus_assoc. reflexivity. Qed.
 
 Lemma Qvec_plus_shuffle : forall {n: nat} (v1 v2 v3 : Qvec n),
   Qvec_plus (Qvec_plus v1 v2) v3 === Qvec_plus (Qvec_plus v1 v3) v2.
@@ -496,15 +516,15 @@ Proof.
   intros. set (P := fun n (v1 v2 v3 : Qvec n) => 
   Qvec_plus (Qvec_plus v1 v2) v3 === Qvec_plus (Qvec_plus v1 v3) v2). change (P n v1 v2 v3).
   apply triple_induction; unfold P; clear P; intros; simpl. apply QNil.
-  apply QCons. apply H. rewrite <- Qplus_assoc. rewrite (Qplus_comm h2 h3).
-  apply Qplus_assoc. Qed.
+  apply QCons. apply H. unfold Qplus; repeat rewrite Qred_correct;
+  rewrite <- Qplus_assoc. rewrite (Qplus_comm h2 h3). apply Qplus_assoc. Qed.
 
 Lemma Qvec_plus_comm : forall {n : nat} (v1 v2 : Qvec n),
   Qvec_plus v1 v2 === Qvec_plus v2 v1.
 Proof.
   intros. set (P := fun {n : nat} (v1 v2 : Qvec n) => Qvec_plus v1 v2 === Qvec_plus v2 v1).
   change (P n v1 v2). apply mutual_induction; unfold P; clear P; intros; simpl. apply QNil.
-  apply QCons. apply H. apply Qplus_comm. Qed.
+  apply QCons. apply H. unfold Qplus. rewrite Qplus_comm. reflexivity. Qed.
 
 Lemma Qvec_foil_w_0 : forall {n : nat} (v1 v2 : Qvec (S n)) (L : list ((Qvec n)*bool)),
   Qplus (Qvec_dot v1 (Qvec_sum L)) (Qvec_foil v2 L) == Qvec_foil (Qvec_plus v2 v1) L.
@@ -514,11 +534,16 @@ Proof.
   unfold Qvec_sum. fold (Qvec_sum L). unfold Qvec_foil.
   fold (Qvec_foil (Qvec_plus v2 (Qvec_mult_class l (consb f)))).
   fold (Qvec_foil (Qvec_plus (Qvec_plus v2 v1) (Qvec_mult_class l (consb f)))).
-  rewrite Qvec_dot_dist_r. rewrite Qplus_assoc. assert (forall (A B C D : Q),
-  Qplus (Qplus (Qplus A B) C) D == Qplus (Qplus A C) (Qplus B D)). intros.
+  rewrite Qvec_dot_dist_r. unfold Qplus; repeat rewrite Qred_correct.
+  rewrite Qplus_assoc. assert (forall (A B C D : Q),
+  QArith_base.Qplus (QArith_base.Qplus (QArith_base.Qplus A B) C) D == 
+  QArith_base.Qplus (QArith_base.Qplus A C) (QArith_base.Qplus B D)). intros.
   repeat rewrite <- Qplus_assoc. rewrite (Qplus_assoc C B D). rewrite (Qplus_comm C B).
   repeat rewrite <- Qplus_assoc. reflexivity.
-  rewrite H; clear H. rewrite IHL. rewrite <- Qvec_dot_dist_l.
+  rewrite H; clear H. assert (H := IHL (Qvec_plus v2 (Qvec_mult_class l (consb f))) v1).
+  unfold Qplus in H; repeat rewrite Qred_correct in H. rewrite H.
+  assert (H0 := Qvec_dot_dist_l v1 v2 (Qvec_mult_class l (consb f))).
+  unfold Qplus in H0; rewrite Qred_correct in H0. rewrite <- H0.
   rewrite Qvec_plus_shuffle. rewrite Qvec_plus_comm. reflexivity. Qed.
 
 Lemma Qvec_dot_sum_eq : forall {n : nat} (w : Qvec (S n)) (L : list ((Qvec n)*bool)),
@@ -534,22 +559,26 @@ Lemma Qvec_foil_0_w : forall {n : nat} (v1 v2 : Qvec (S n)) (L : list ((Qvec n)*
 Proof.
   intros. assert (H := Qvec_foil_w_0 v2 v1 L). rewrite <- (Qplus_inj_r _ _ (Qvec_sum_dot v2 L)).
   unfold Qminus. rewrite <- Qplus_assoc. rewrite (Qplus_comm (Qopp _) _). rewrite Qplus_opp_r.
-  rewrite Qplus_0_r. rewrite <- H. rewrite Qvec_dot_sum_eq. apply Qplus_comm. Qed.
+  rewrite Qplus_0_r. rewrite <- H. rewrite Qvec_dot_sum_eq. unfold Qplus; rewrite Qred_correct.
+  apply Qplus_comm. Qed.
 
 Lemma Qvec_normsq_eq_sum_normsq_foil : forall {n: nat} (L : list ((Qvec n)*bool)),
   Qvec_normsq (Qvec_sum L) == Qplus (Qvec_sum_normsq L) (Qmult (2#1) (Qvec_foil (Qvec_zero (S n)) L)).
 Proof.
-  intros. induction L. simpl. rewrite Qmult_0_r. rewrite Qplus_0_l. apply Qvec_normsq_Qvec_0. 
+  intros. induction L. simpl. unfold Qplus, Qmult; rewrite Qred_correct.
+  rewrite Qmult_0_r. rewrite Qplus_0_l. apply Qvec_normsq_Qvec_0.
   destruct a as [f l]. unfold Qvec_normsq, Qvec_sum. fold (Qvec_sum L).
   unfold Qvec_sum_normsq. fold (Qvec_sum_normsq L). unfold Qvec_foil.
   fold (Qvec_foil (Qvec_plus (Qvec_zero (S n)) (Qvec_mult_class l (consb f))) L).
   fold (Qvec_normsq (Qvec_plus (Qvec_mult_class l (consb f)) (Qvec_sum L))).
   rewrite Qvec_normsq_plus. assert (Qvec_normsq (Qvec_mult_class l (consb f)) == Qvec_normsq (consb f)).
   destruct l. reflexivity. unfold Qvec_mult_class. rewrite <- normsq_mult_neg_1_same. reflexivity.
-  rewrite H; clear H. rewrite IHL. rewrite <- Qplus_assoc. rewrite (Qplus_assoc ((2#1)*_) (Qvec_sum_normsq L) _).
-  rewrite (Qplus_comm ((2#1)*_) (Qvec_sum_normsq L)). repeat rewrite <- Qplus_assoc.
+  rewrite H; clear H. rewrite IHL. unfold Qplus, Qmult; repeat rewrite Qred_correct.
+  rewrite <- Qplus_assoc. rewrite (Qplus_assoc (QArith_base.Qmult (2#1) _) (Qvec_sum_normsq L) _).
+  rewrite (Qplus_comm (QArith_base.Qmult (2#1) _) (Qvec_sum_normsq L)). repeat rewrite <- Qplus_assoc.
   rewrite Qvec_dot_Qvec_zero_l. repeat rewrite Qplus_0_l. rewrite <- Qmult_plus_distr_r.
-  rewrite Qvec_foil_w_0. reflexivity. Qed.
+  assert (H := Qvec_foil_w_0 (Qvec_mult_class l (consb f)) (Qvec_zero (S n)) L).
+  unfold Qplus in H; rewrite Qred_correct in H. rewrite H. reflexivity. Qed.
 
 Lemma Qvec_plus_assoc : forall {n : nat} (v1 v2 v3 : Qvec n),
   Qvec_plus (Qvec_plus v1 v2) v3 === Qvec_plus v1 (Qvec_plus v2 v3).
@@ -557,14 +586,16 @@ Proof.
   intros. set (P := fun n (v1 v2 v3 : Qvec n) => 
   Qvec_plus (Qvec_plus v1 v2) v3 === Qvec_plus v1 (Qvec_plus v2 v3)). change (P n v1 v2 v3).
   apply triple_induction; unfold P; clear P; intros. reflexivity.
-  simpl. apply QCons. apply H. symmetry. apply Qplus_assoc. Qed.
+  simpl. apply QCons. apply H. symmetry. unfold Qplus; repeat rewrite Qred_correct;
+  apply Qplus_assoc. Qed.
 
 Lemma Qvec_foil_append : forall {n : nat} (L1 L2 : list ((Qvec n)*bool)) (v : Qvec (S n)),
   Qvec_foil v (List.app L1 L2) == Qplus (Qvec_foil v L1) (Qvec_foil (Qvec_plus v (Qvec_sum L1)) L2).
 Proof.
-  intros n L1. induction L1; intros. simpl. rewrite Qvec_plus_Qvec_zero_r. symmetry. apply Qplus_0_l.
-  destruct a as [f l]. simpl. rewrite IHL1. rewrite Qvec_plus_assoc. 
-  rewrite Qplus_assoc. reflexivity. Qed.
+  intros n L1. induction L1; intros. simpl. rewrite Qvec_plus_Qvec_zero_r. symmetry.
+  unfold Qplus; rewrite Qplus_0_l; apply Qred_correct.
+  destruct a as [f l]. simpl. rewrite IHL1. rewrite Qvec_plus_assoc.
+  unfold Qplus; repeat rewrite Qred_correct; rewrite Qplus_assoc. reflexivity. Qed.
 
 Lemma Qvec_sum_sum_class : forall {n : nat} (w : Qvec (S n)) (L : list ((Qvec n)*bool)),
   Qvec_plus w (Qvec_sum L) === Qvec_sum_class w L.
@@ -585,7 +616,7 @@ Proof.
   intros. set (P := fun n (v1 v2 : Qvec n) => Qvec_dot v1 v2 == Qvec_dot v2 v1).
   change (P n v1 v2). apply mutual_induction; unfold P; clear P; intros. reflexivity.
   repeat (rewrite Zvec_dot_cons). repeat rewrite Qvec_dot_cons. rewrite H.
-  rewrite Qmult_comm. reflexivity. Qed.
+  unfold Qmult; rewrite Qmult_comm. reflexivity. Qed.
 
 Lemma Qvec_dot_Not_Qvec_zero : forall {n : nat} (v1 v2 : Qvec n),
   (~ Qvec_dot v1 v2 == 0) -> (~ v1 === Qvec_zero n) /\ (~ v2 === Qvec_zero n).
@@ -607,45 +638,52 @@ Proof.
   intros. induction v1. exfalso. apply H. reflexivity.
   apply Qvec_cons_Not_Qvec_zero in H. inversion H. apply Qsquare_gt_0 in H0.
   unfold Qvec_normsq. rewrite Qvec_dot_cons. fold (Qvec_normsq v1).
+  unfold Qplus, Qmult; repeat rewrite Qred_correct. rewrite <- Qplus_0_r.
   apply (Qplus_lt_le_compat 0 _ 0 _ H0). apply Qvec_normsq_nonneg.
   apply IHv1 in H0. unfold Qvec_normsq. rewrite Qvec_dot_cons.
-  fold (Qvec_normsq v1). rewrite Qplus_comm.
-  apply (Qplus_lt_le_compat 0 _ 0 _ H0 (Qsquare_nonneg _)). Qed.
+  fold (Qvec_normsq v1). unfold Qplus, Qmult; repeat rewrite Qred_correct.
+  rewrite Qplus_comm. apply (Qplus_lt_le_compat 0 _ 0 _ H0 (Qsquare_nonneg _)). Qed.
 
 Lemma Qvec_sum_dot_append : forall {n : nat} (L1 L2 : list ((Qvec n)*bool)) (w : Qvec (S n)),
   Qvec_sum_dot w (List.app L1 L2) == Qplus (Qvec_sum_dot w L1) (Qvec_sum_dot w L2).
 Proof.
-  intros n L1; induction L1; intros. simpl. symmetry. apply Qplus_0_l.
-  destruct a as [f l]. simpl. rewrite IHL1. 
+  intros n L1; induction L1; intros. simpl. symmetry. unfold Qplus;
+  rewrite Qplus_0_l; apply Qred_correct.
+  destruct a as [f l]. simpl. rewrite IHL1. unfold Qplus; repeat rewrite Qred_correct. 
   repeat (rewrite Qplus_assoc). reflexivity. Qed.
 
 Lemma Qfoil : forall (A B C D : Q),
  (A + B) * (C + D) == (A * C) + (A * D) + (B * C) + (B * D).
 Proof.
-  intros. rewrite Qmult_plus_distr_l. repeat (rewrite Qmult_plus_distr_r).
+  intros. unfold Qplus, Qmult; repeat rewrite Qred_correct.
+  rewrite Qmult_plus_distr_l. repeat (rewrite Qmult_plus_distr_r).
   apply Qplus_assoc. Qed.
 
 Lemma CSHH : forall (A B : Q),
   (A * B) + (A * B) <= (A * A) + (B * B).
 Proof.
-  intros. assert ((A - B) * (A - B) == ((A * A) + (B * B)) - ((A * B) + (A * B))).
-  unfold Qminus. rewrite Qfoil. repeat rewrite <- Qopp_mult_distr_r.
-  repeat rewrite <- Qopp_mult_distr_l. rewrite Qopp_involutive. repeat rewrite <- Qplus_assoc.
-  rewrite (Qplus_comm _ (B*B)). rewrite (Qplus_assoc _ (B * B) _). rewrite (Qplus_comm _ (B * B)).
+  intros. assert ((A - B) * (A - B) == (QArith_base.Qplus (A * A) (B * B)) - (QArith_base.Qplus (A * B) (A * B))).
+  unfold Qminus. assert (H := Qfoil A (Qopp B) A (Qopp B)).
+  unfold Qplus in H; repeat rewrite Qred_correct in H. rewrite H. unfold Qmult; repeat rewrite Qred_correct.
+  repeat rewrite <- Qopp_mult_distr_r. repeat rewrite <- Qopp_mult_distr_l.
+  rewrite Qopp_involutive. repeat rewrite <- Qplus_assoc.
+  rewrite (Qplus_comm _ (_ B B)). rewrite (Qplus_assoc _ (_ B B) _). rewrite (Qplus_comm _ (_ B B)).
   repeat rewrite <- Qplus_assoc. rewrite <- Qopp_plus. rewrite (Qmult_comm B A). reflexivity. 
-  assert (0 <= (A - B) * (A - B)). apply Qsquare_nonneg. rewrite H in H0.
-  apply (Qplus_le_l _ _ (A * B + A * B)) in H0. rewrite Qplus_0_l in H0. unfold Qminus in H0.
-  rewrite <- (Qplus_assoc (A*A+B*B) (- (A*B + A*B)) (A*B +A*B)) in H0.
-  rewrite (Qplus_comm _ (A*B + A*B)) in H0. rewrite Qplus_opp_r in H0. rewrite Qplus_0_r in H0.
-  apply H0. Qed.
+  assert (0 <= (A - B) * (A - B)). unfold Qmult; rewrite Qred_correct. apply Qsquare_nonneg.
+  rewrite H in H0. apply (Qplus_le_l _ _ (A * B + A * B)) in H0. rewrite Qplus_0_l in H0.
+  unfold Qminus in H0. rewrite <- Qplus_assoc in H0.
+  rewrite (Qplus_comm _ (_ (A*B) (A*B))) in H0.
+  unfold Qplus in H0 at 2. rewrite Qred_correct in H0. rewrite Qplus_opp_r in H0.
+  rewrite Qplus_0_r in H0. unfold Qplus at 2. rewrite Qred_correct. apply H0. Qed.
 
 (* This is trivialy true if the parity of negatives is odd *)
 Lemma Cauchy_Schwarz_helper': forall (A B C D : Q),
   A*B*C*D + A*B*C*D <= A*A*D*D + B*B*C*C.
 Proof.
   intros. assert (forall (A B C D : Q), A*B*C*D == A*D*(B*C)). intros.
+  unfold Qplus, Qmult; repeat rewrite Qred_correct.
   rewrite (Qmult_comm B0 C0). rewrite <- Qmult_assoc. rewrite <- Qmult_assoc.
-  rewrite (Qmult_comm B0 (C0 * D0)). rewrite Qmult_assoc. rewrite (Qmult_comm C0 D0).
+  rewrite (Qmult_comm B0 (_ C0 D0)). rewrite Qmult_assoc. rewrite (Qmult_comm C0 D0).
   repeat rewrite Qmult_assoc. reflexivity. repeat rewrite H. apply CSHH. Qed.
 
 Lemma Cauchy_Schwarz_helper : forall {n : nat} (v1 v2 : Qvec n) (A B : Q),
@@ -654,13 +692,17 @@ Proof.
   intros n v1 v2. set (P := fun n (v1 v2 : Qvec n) => forall (A B : Q),
   A*B*(Qvec_dot v1 v2) + A*B*(Qvec_dot v1 v2) <= A*A*(Qvec_normsq v2) + B*B*(Qvec_normsq v1)).
   change (P n v1 v2). apply mutual_induction; unfold P; clear P; intros.
-  unfold Qvec_normsq, Qvec_dot; simpl. repeat rewrite Qmult_0_r. apply Qle_refl.
-  repeat (rewrite Qvec_dot_cons). repeat (rewrite Qvec_normsq_cons).
-  repeat (rewrite Qmult_plus_distr_r). repeat (rewrite Qplus_assoc).
-  repeat (rewrite Qmult_assoc). assert (forall (A B C D : Q), A+B+C+D == A+C+(B+D)). intros.
+  unfold Qvec_normsq, Qvec_dot; simpl. unfold Qmult; repeat rewrite Qred_correct.
+  repeat rewrite Qmult_0_r. apply Qle_refl. repeat (rewrite Qvec_dot_cons). repeat (rewrite Qvec_normsq_cons).
+  unfold Qplus, Qmult; repeat rewrite Qred_correct.
+  repeat (rewrite Qmult_plus_distr_r). repeat (rewrite Qplus_assoc). repeat (rewrite Qmult_assoc).
+  assert (forall (A B C D : Q), (QArith_base.Qplus (QArith_base.Qplus (QArith_base.Qplus A B) C) D) == 
+  (QArith_base.Qplus (QArith_base.Qplus A C) (QArith_base.Qplus B D))). intros.
   repeat rewrite <- Qplus_assoc. rewrite (Qplus_assoc B0 C D). rewrite (Qplus_comm B0 C).
-  rewrite <- Qplus_assoc. reflexivity. repeat rewrite H0; clear H0.
-  assert (H0 := Cauchy_Schwarz_helper' A B h1 h2). apply (Qplus_le_compat _ _ _ _ H0 (H A B)). Qed.
+  rewrite <- Qplus_assoc. reflexivity. unfold Qplus in H0. repeat rewrite H0; clear H0.
+  assert (H0 := Cauchy_Schwarz_helper' A B h1 h2). apply Qplus_le_compat.
+  unfold Qplus, Qmult in H0; repeat rewrite Qred_correct in H0; apply H0.
+  assert (H1 := H A B). unfold Qplus, Qmult in H1; repeat rewrite Qred_correct in H1; apply H1. Qed.
 
 Lemma Cauchy_Schwarz_inequality : forall {n : nat} (v1 v2 : Qvec n),
   (Qvec_dot v1 v2)*(Qvec_dot v1 v2) <= (Qvec_normsq v1)*(Qvec_normsq v2).
@@ -669,9 +711,12 @@ Proof.
   (Qvec_dot v1 v2)*(Qvec_dot v1 v2) <= (Qvec_normsq v1)*(Qvec_normsq v2)). change (P n v1 v2).
   apply mutual_induction; unfold P; clear P; intros. apply Qle_refl.
   repeat (rewrite Qvec_dot_cons). repeat (rewrite Qvec_normsq_cons). repeat (rewrite Qfoil).
-  rewrite <- Qmult_assoc. rewrite (Qmult_comm h2 (h1 * h2)). repeat rewrite Qmult_assoc.
-  repeat rewrite <- Qplus_assoc. apply (Qplus_le_r _ _ (h1*h1*h2*h2)).
+  unfold Qplus, Qmult; repeat rewrite Qred_correct.
+  rewrite <- Qmult_assoc. rewrite (Qmult_comm h2 (QArith_base.Qmult h1 h2)). repeat rewrite Qmult_assoc.
+  repeat rewrite <- Qplus_assoc. apply Qplus_le_r.
   repeat rewrite Qplus_assoc. apply Qplus_le_compat.
-  { repeat rewrite <- Qmult_assoc. rewrite (Qmult_comm _ (h1 * h2)).
-    rewrite (Qmult_comm _ (h2 * h2)). repeat rewrite Qmult_assoc. apply Cauchy_Schwarz_helper.
-  } apply H. Qed.
+  { repeat rewrite <- Qmult_assoc. rewrite (Qmult_comm _ (QArith_base.Qmult h1 h2)).
+    rewrite (Qmult_comm _ (QArith_base.Qmult h2 h2)). repeat rewrite Qmult_assoc.
+    assert (H0 := Cauchy_Schwarz_helper t1 t2 h1 h2). unfold Qplus, Qmult in H0;
+    repeat rewrite Qred_correct in H0. apply H0.
+  } unfold Qmult in H; repeat rewrite Qred_correct in H; apply H. Qed.

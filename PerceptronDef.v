@@ -101,7 +101,7 @@ Lemma correctly_classifiedPP' n (T : list (Qvec n*bool)) w :
 Proof.
   split; intros H; induction H; try econstructor; eauto.
   destruct x; simpl in *; constructor; auto.
-Qed.  
+Qed.
 
 Definition linearly_separable {n: nat} (T : (list ((Qvec n)*bool))) : Prop :=
   exists (w : (Qvec (S n))), correctly_classifiedP T w.
