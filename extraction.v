@@ -34,4 +34,35 @@ Definition fueled_perceptron
   : option (Qvec (S n)) :=
   gas (fun fuel => perceptron fuel T w).
 
-Extraction "/home/charlie/CoqPerceptron/Benchmarks/hs/Perceptron.hs" fueled_perceptron inner_perceptron_MCE.
+Extract Inductive positive =>
+"Prelude.Integer" [ "(\x -> (Prelude.+) ((Prelude.*) 2 x) 1)"
+                    "(\x -> (Prelude.*) 2 x)" "1" ]
+              "(\xI xO xH p ->
+                   if (Prelude.==) p 1 then xH ()
+                   else if Prelude.even p then xO (Prelude.quot p 2)
+                        else xI (Prelude.quot p 2))".
+
+Extract Inductive Z =>
+  "Prelude.Integer" [ "0" "" "(\x -> (Prelude.*) x (-1))" ]
+              "(\fO fPos fNeg z ->
+                   if (Prelude.==) z 0 then fO ()
+                   else if (Prelude.>) z 0 then fPos z
+                        else fNeg ((Prelude.*) z (-1)))".
+
+Extract Constant Z.add => "(Prelude.+)".
+Extract Constant Z.mul => "(Prelude.*)".
+Extract Constant Z.eqb => "(Prelude.==)".
+Extract Constant Z.gtb => "(Prelude.>)".
+Extract Constant Z.geb => "(Prelude.>=)".
+
+Extract Inductive Q =>
+  "Rational" [ "(\n d -> (Data.Ratio.%) n d)" ]
+             "(\fNum fDen q -> Prelude.error ""induction on Q unsupported!"")".
+
+Extract Constant Qplus => "(Prelude.+)".
+Extract Constant Qmult => "(Prelude.*)".
+Extract Constant Qred => "(\x -> x)".
+Extract Constant Qeq_bool => "(Prelude.==)".
+Extract Constant Qle_bool => "(Prelude.<=)".
+
+Extraction "./Benchmarks/hs/Perceptron.hs" fueled_perceptron inner_perceptron_MCE.
