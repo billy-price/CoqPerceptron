@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+from matplotlib import use
+use('Agg')
+
 import matplotlib.pyplot as plot
 import numpy as np
 
@@ -9,6 +12,7 @@ def plot_data(img_name, file_name, xlabel, yRange = None):
   A = []
   B = []
   C = []
+  E = []
   N = [""]
 
   F = open(file_name, 'r')
@@ -19,6 +23,7 @@ def plot_data(img_name, file_name, xlabel, yRange = None):
     A.append(float(data[8]))
     B.append(float(data[2]))
     C.append(float(data[5]))
+    E.append(float(data[11]))
   F.close()
 
   X = np.arange(len(A))
@@ -27,10 +32,12 @@ def plot_data(img_name, file_name, xlabel, yRange = None):
   A = [x / y for (x, y) in zip(A, D)]
   B = [x / y for (x, y) in zip(B, D)]
   C = [x / y for (x, y) in zip(C, D)]
+  E = [x / y for (x, y) in zip(E, D)]
 
-  a_bar = plot.bar(X-0.33, A, color = 'g', width = 0.33)
-  b_bar = plot.bar(X, B, color = 'b',width = 0.33)
-  c_bar = plot.bar(X, C, color = 'r', bottom = B, width = 0.33)
+  a_bar = plot.bar(X-0.375, A, color = 'g', width = 0.25)
+  b_bar = plot.bar(X-0.125, B, color = 'b',width = 0.25)
+  c_bar = plot.bar(X-0.125, C, color = 'r', bottom = B, width = 0.25)
+  e_bar = plot.bar(X+0.125, E, color = 'orange', width = 0.25)
 
   axis.axes.get_xaxis().set_ticklabels(N)
 
@@ -40,13 +47,13 @@ def plot_data(img_name, file_name, xlabel, yRange = None):
   axis.axes.get_yaxis().set_ticklabels(
        [x.get_text()+'x' for x in axis.get_yticklabels()])
 
-  plot.legend([a_bar, b_bar, c_bar],
-              ["Coq Perceptron", "C++ Perceptron", "Coq Validator"],
+  plot.legend([a_bar, b_bar, c_bar, e_bar],
+              ["Coq Perceptron", "C++ Perceptron", "Coq Validator", "CoqOpt"],
               loc=0)
   plot.xlabel(xlabel)
   plot.ylabel("Time")
   plot.savefig(img_name)
 
 plot_data("images/vecotrs.png", "vectors.plot", "Number of Vectors")
-plot_data("images/features.png", "features.plot", "Number of Features")
-plot_data("images/Z.png", "Z.plot", u'Precision Bound -- Q = a/Z, a ∈ [-Z, Z]', [0,3])
+plot_data("images/features.png", "features.plot", "Number of Features", [0,3.5])
+plot_data("images/Z.png", "Z.plot", u'Precision Bound -- Q = a/Z, a ∈ [-Z, Z]', [0,3.5])
