@@ -2,7 +2,6 @@ module Perceptron where
 
 import qualified Prelude
 import Data.Ratio
-import Data.Ratio
 
 andb :: Prelude.Bool -> Prelude.Bool -> Prelude.Bool
 andb b1 b2 =

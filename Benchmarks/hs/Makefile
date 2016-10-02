@@ -1,7 +1,7 @@
 all: RunPerceptron RunValidator
 
 addImportDataRatio:
-	sed -i -f addImportDataRatio.sed Perceptron.hs
+	grep -q '^import Data.Ratio' Perceptron.hs || sed -i -f addImportDataRatio.sed Perceptron.hs
 
 RunPerceptron: RunPerceptron.hs ReadData.hs Perceptron.hs addImportDataRatio
 	ghc RunPerceptron.hs
