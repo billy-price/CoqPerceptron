@@ -15,7 +15,7 @@ Verified Coq Implementation of the Rational-Valued Perceptron Algorithm
 ## Benchmarks/
 * [cpp/](https://github.com/tm507211/CoqPerceptron/tree/master/Benchmarks/cpp): C++ implementation of Perceptron; also, program to generate random data sets
 * [hs/](https://github.com/tm507211/CoqPerceptron/tree/master/Benchmarks/hs):Extracted CoqPerceptron to Haskell
-* [hsopt/](https://github.com/tm507211/CoqPerceptorn/tree/master/Benchmarks/hsopt): Soundly Optimized Extraction of CoqPercepton to Haskell
+* [hsopt/](https://github.com/tm507211/CoqPerceptron/tree/master/Benchmarks/hsopt): Soundly Optimized Extraction of CoqPercepton to Haskell
 * [data/](https://github.com/tm507211/CoqPerceptron/tree/master/Benchmarks/data): Real-world and randomly-generated data sets
 * [output/](https://github.com/tm507211/CoqPerceptron/tree/master/Benchmarks/output):Output and timing results from running the CPP, HS, and HSOpt verions of the Perceptron.
 * [scripts/](https://github.com/tm507211/CoqPerceptron/tree/master/Benchmarks/scripts): Scripts for generated random data sets and running benchmarks
