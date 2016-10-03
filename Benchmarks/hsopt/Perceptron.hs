@@ -43,7 +43,10 @@ eqb = (Prelude.==)
 
 succ :: Prelude.Integer -> Prelude.Integer
 succ x =
-  (\xI xO xH p ->                    if (Prelude.==) p 1 then xH ()                    else if Prelude.even p then xO (Prelude.quot p 2)                         else xI (Prelude.quot p 2))
+  (\xI xO xH p ->
+                   if (Prelude.==) p 1 then xH ()
+                   else if Prelude.even p then xO (Prelude.quot p 2)
+                        else xI (Prelude.quot p 2))
     (\p -> (\x -> (Prelude.*) 2 x)
     (succ p))
     (\p -> (\x -> (Prelude.+) ((Prelude.*) 2 x) 1)
@@ -54,9 +57,15 @@ succ x =
 
 add0 :: Prelude.Integer -> Prelude.Integer -> Prelude.Integer
 add0 x y =
-  (\xI xO xH p ->                    if (Prelude.==) p 1 then xH ()                    else if Prelude.even p then xO (Prelude.quot p 2)                         else xI (Prelude.quot p 2))
+  (\xI xO xH p ->
+                   if (Prelude.==) p 1 then xH ()
+                   else if Prelude.even p then xO (Prelude.quot p 2)
+                        else xI (Prelude.quot p 2))
     (\p ->
-    (\xI xO xH p ->                    if (Prelude.==) p 1 then xH ()                    else if Prelude.even p then xO (Prelude.quot p 2)                         else xI (Prelude.quot p 2))
+    (\xI xO xH p ->
+                   if (Prelude.==) p 1 then xH ()
+                   else if Prelude.even p then xO (Prelude.quot p 2)
+                        else xI (Prelude.quot p 2))
       (\q -> (\x -> (Prelude.*) 2 x)
       (add_carry p q))
       (\q -> (\x -> (Prelude.+) ((Prelude.*) 2 x) 1)
@@ -65,7 +74,10 @@ add0 x y =
       (succ p))
       y)
     (\p ->
-    (\xI xO xH p ->                    if (Prelude.==) p 1 then xH ()                    else if Prelude.even p then xO (Prelude.quot p 2)                         else xI (Prelude.quot p 2))
+    (\xI xO xH p ->
+                   if (Prelude.==) p 1 then xH ()
+                   else if Prelude.even p then xO (Prelude.quot p 2)
+                        else xI (Prelude.quot p 2))
       (\q -> (\x -> (Prelude.+) ((Prelude.*) 2 x) 1)
       (add0 p q))
       (\q -> (\x -> (Prelude.*) 2 x)
@@ -74,7 +86,10 @@ add0 x y =
       p)
       y)
     (\_ ->
-    (\xI xO xH p ->                    if (Prelude.==) p 1 then xH ()                    else if Prelude.even p then xO (Prelude.quot p 2)                         else xI (Prelude.quot p 2))
+    (\xI xO xH p ->
+                   if (Prelude.==) p 1 then xH ()
+                   else if Prelude.even p then xO (Prelude.quot p 2)
+                        else xI (Prelude.quot p 2))
       (\q -> (\x -> (Prelude.*) 2 x)
       (succ q))
       (\q -> (\x -> (Prelude.+) ((Prelude.*) 2 x) 1)
@@ -86,9 +101,15 @@ add0 x y =
 
 add_carry :: Prelude.Integer -> Prelude.Integer -> Prelude.Integer
 add_carry x y =
-  (\xI xO xH p ->                    if (Prelude.==) p 1 then xH ()                    else if Prelude.even p then xO (Prelude.quot p 2)                         else xI (Prelude.quot p 2))
+  (\xI xO xH p ->
+                   if (Prelude.==) p 1 then xH ()
+                   else if Prelude.even p then xO (Prelude.quot p 2)
+                        else xI (Prelude.quot p 2))
     (\p ->
-    (\xI xO xH p ->                    if (Prelude.==) p 1 then xH ()                    else if Prelude.even p then xO (Prelude.quot p 2)                         else xI (Prelude.quot p 2))
+    (\xI xO xH p ->
+                   if (Prelude.==) p 1 then xH ()
+                   else if Prelude.even p then xO (Prelude.quot p 2)
+                        else xI (Prelude.quot p 2))
       (\q -> (\x -> (Prelude.+) ((Prelude.*) 2 x) 1)
       (add_carry p q))
       (\q -> (\x -> (Prelude.*) 2 x)
@@ -97,7 +118,10 @@ add_carry x y =
       (succ p))
       y)
     (\p ->
-    (\xI xO xH p ->                    if (Prelude.==) p 1 then xH ()                    else if Prelude.even p then xO (Prelude.quot p 2)                         else xI (Prelude.quot p 2))
+    (\xI xO xH p ->
+                   if (Prelude.==) p 1 then xH ()
+                   else if Prelude.even p then xO (Prelude.quot p 2)
+                        else xI (Prelude.quot p 2))
       (\q -> (\x -> (Prelude.*) 2 x)
       (add_carry p q))
       (\q -> (\x -> (Prelude.+) ((Prelude.*) 2 x) 1)
@@ -106,7 +130,10 @@ add_carry x y =
       (succ p))
       y)
     (\_ ->
-    (\xI xO xH p ->                    if (Prelude.==) p 1 then xH ()                    else if Prelude.even p then xO (Prelude.quot p 2)                         else xI (Prelude.quot p 2))
+    (\xI xO xH p ->
+                   if (Prelude.==) p 1 then xH ()
+                   else if Prelude.even p then xO (Prelude.quot p 2)
+                        else xI (Prelude.quot p 2))
       (\q -> (\x -> (Prelude.+) ((Prelude.*) 2 x) 1)
       (succ q))
       (\q -> (\x -> (Prelude.*) 2 x)
@@ -118,9 +145,11 @@ add_carry x y =
 
 pred_double :: Prelude.Integer -> Prelude.Integer
 pred_double x =
-  (\xI xO xH p ->                    if (Prelude.==) p 1 then xH ()                    else if Prelude.even p then xO (Prelude.quot p 2)                         else xI (Prelude.quot p 2))
-    (\p -> (\x -> (Prelude.+) ((Prelude.*) 2 x) 1)
-    ((\x -> (Prelude.*) 2 x)
+  (\xI xO xH p ->
+                   if (Prelude.==) p 1 then xH ()
+                   else if Prelude.even p then xO (Prelude.quot p 2)
+                        else xI (Prelude.quot p 2))
+    (\p -> (\x -> (Prelude.+) ((Prelude.*) 2 x) 1) ((\x -> (Prelude.*) 2 x)
     p))
     (\p -> (\x -> (Prelude.+) ((Prelude.*) 2 x) 1)
     (pred_double p))
@@ -148,7 +177,10 @@ double_mask x =
 
 double_pred_mask :: Prelude.Integer -> Mask
 double_pred_mask x =
-  (\xI xO xH p ->                    if (Prelude.==) p 1 then xH ()                    else if Prelude.even p then xO (Prelude.quot p 2)                         else xI (Prelude.quot p 2))
+  (\xI xO xH p ->
+                   if (Prelude.==) p 1 then xH ()
+                   else if Prelude.even p then xO (Prelude.quot p 2)
+                        else xI (Prelude.quot p 2))
     (\p -> IsPos ((\x -> (Prelude.*) 2 x) ((\x -> (Prelude.*) 2 x)
     p)))
     (\p -> IsPos ((\x -> (Prelude.*) 2 x)
@@ -159,9 +191,15 @@ double_pred_mask x =
 
 sub_mask :: Prelude.Integer -> Prelude.Integer -> Mask
 sub_mask x y =
-  (\xI xO xH p ->                    if (Prelude.==) p 1 then xH ()                    else if Prelude.even p then xO (Prelude.quot p 2)                         else xI (Prelude.quot p 2))
+  (\xI xO xH p ->
+                   if (Prelude.==) p 1 then xH ()
+                   else if Prelude.even p then xO (Prelude.quot p 2)
+                        else xI (Prelude.quot p 2))
     (\p ->
-    (\xI xO xH p ->                    if (Prelude.==) p 1 then xH ()                    else if Prelude.even p then xO (Prelude.quot p 2)                         else xI (Prelude.quot p 2))
+    (\xI xO xH p ->
+                   if (Prelude.==) p 1 then xH ()
+                   else if Prelude.even p then xO (Prelude.quot p 2)
+                        else xI (Prelude.quot p 2))
       (\q ->
       double_mask (sub_mask p q))
       (\q ->
@@ -170,7 +208,10 @@ sub_mask x y =
       p))
       y)
     (\p ->
-    (\xI xO xH p ->                    if (Prelude.==) p 1 then xH ()                    else if Prelude.even p then xO (Prelude.quot p 2)                         else xI (Prelude.quot p 2))
+    (\xI xO xH p ->
+                   if (Prelude.==) p 1 then xH ()
+                   else if Prelude.even p then xO (Prelude.quot p 2)
+                        else xI (Prelude.quot p 2))
       (\q ->
       succ_double_mask (sub_mask_carry p q))
       (\q ->
@@ -179,7 +220,10 @@ sub_mask x y =
       (pred_double p))
       y)
     (\_ ->
-    (\xI xO xH p ->                    if (Prelude.==) p 1 then xH ()                    else if Prelude.even p then xO (Prelude.quot p 2)                         else xI (Prelude.quot p 2))
+    (\xI xO xH p ->
+                   if (Prelude.==) p 1 then xH ()
+                   else if Prelude.even p then xO (Prelude.quot p 2)
+                        else xI (Prelude.quot p 2))
       (\_ ->
       IsNeg)
       (\_ ->
@@ -191,9 +235,15 @@ sub_mask x y =
 
 sub_mask_carry :: Prelude.Integer -> Prelude.Integer -> Mask
 sub_mask_carry x y =
-  (\xI xO xH p ->                    if (Prelude.==) p 1 then xH ()                    else if Prelude.even p then xO (Prelude.quot p 2)                         else xI (Prelude.quot p 2))
+  (\xI xO xH p ->
+                   if (Prelude.==) p 1 then xH ()
+                   else if Prelude.even p then xO (Prelude.quot p 2)
+                        else xI (Prelude.quot p 2))
     (\p ->
-    (\xI xO xH p ->                    if (Prelude.==) p 1 then xH ()                    else if Prelude.even p then xO (Prelude.quot p 2)                         else xI (Prelude.quot p 2))
+    (\xI xO xH p ->
+                   if (Prelude.==) p 1 then xH ()
+                   else if Prelude.even p then xO (Prelude.quot p 2)
+                        else xI (Prelude.quot p 2))
       (\q ->
       succ_double_mask (sub_mask_carry p q))
       (\q ->
@@ -202,7 +252,10 @@ sub_mask_carry x y =
       (pred_double p))
       y)
     (\p ->
-    (\xI xO xH p ->                    if (Prelude.==) p 1 then xH ()                    else if Prelude.even p then xO (Prelude.quot p 2)                         else xI (Prelude.quot p 2))
+    (\xI xO xH p ->
+                   if (Prelude.==) p 1 then xH ()
+                   else if Prelude.even p then xO (Prelude.quot p 2)
+                        else xI (Prelude.quot p 2))
       (\q ->
       double_mask (sub_mask_carry p q))
       (\q ->
@@ -222,7 +275,10 @@ sub x y =
 
 mul :: Prelude.Integer -> Prelude.Integer -> Prelude.Integer
 mul x y =
-  (\xI xO xH p ->                    if (Prelude.==) p 1 then xH ()                    else if Prelude.even p then xO (Prelude.quot p 2)                         else xI (Prelude.quot p 2))
+  (\xI xO xH p ->
+                   if (Prelude.==) p 1 then xH ()
+                   else if Prelude.even p then xO (Prelude.quot p 2)
+                        else xI (Prelude.quot p 2))
     (\p ->
     add0 y ((\x -> (Prelude.*) 2 x) (mul p y)))
     (\p -> (\x -> (Prelude.*) 2 x)
@@ -233,7 +289,10 @@ mul x y =
 
 size_nat :: Prelude.Integer -> Nat
 size_nat p =
-  (\xI xO xH p ->                    if (Prelude.==) p 1 then xH ()                    else if Prelude.even p then xO (Prelude.quot p 2)                         else xI (Prelude.quot p 2))
+  (\xI xO xH p ->
+                   if (Prelude.==) p 1 then xH ()
+                   else if Prelude.even p then xO (Prelude.quot p 2)
+                        else xI (Prelude.quot p 2))
     (\p0 -> S
     (size_nat p0))
     (\p0 -> S
@@ -245,9 +304,15 @@ size_nat p =
 compare_cont :: Comparison -> Prelude.Integer -> Prelude.Integer ->
                 Comparison
 compare_cont r x y =
-  (\xI xO xH p ->                    if (Prelude.==) p 1 then xH ()                    else if Prelude.even p then xO (Prelude.quot p 2)                         else xI (Prelude.quot p 2))
+  (\xI xO xH p ->
+                   if (Prelude.==) p 1 then xH ()
+                   else if Prelude.even p then xO (Prelude.quot p 2)
+                        else xI (Prelude.quot p 2))
     (\p ->
-    (\xI xO xH p ->                    if (Prelude.==) p 1 then xH ()                    else if Prelude.even p then xO (Prelude.quot p 2)                         else xI (Prelude.quot p 2))
+    (\xI xO xH p ->
+                   if (Prelude.==) p 1 then xH ()
+                   else if Prelude.even p then xO (Prelude.quot p 2)
+                        else xI (Prelude.quot p 2))
       (\q ->
       compare_cont r p q)
       (\q ->
@@ -256,7 +321,10 @@ compare_cont r x y =
       Gt)
       y)
     (\p ->
-    (\xI xO xH p ->                    if (Prelude.==) p 1 then xH ()                    else if Prelude.even p then xO (Prelude.quot p 2)                         else xI (Prelude.quot p 2))
+    (\xI xO xH p ->
+                   if (Prelude.==) p 1 then xH ()
+                   else if Prelude.even p then xO (Prelude.quot p 2)
+                        else xI (Prelude.quot p 2))
       (\q ->
       compare_cont Lt p q)
       (\q ->
@@ -265,7 +333,10 @@ compare_cont r x y =
       Gt)
       y)
     (\_ ->
-    (\xI xO xH p ->                    if (Prelude.==) p 1 then xH ()                    else if Prelude.even p then xO (Prelude.quot p 2)                         else xI (Prelude.quot p 2))
+    (\xI xO xH p ->
+                   if (Prelude.==) p 1 then xH ()
+                   else if Prelude.even p then xO (Prelude.quot p 2)
+                        else xI (Prelude.quot p 2))
       (\_ ->
       Lt)
       (\_ ->
@@ -285,9 +356,15 @@ ggcdn n a b =
   case n of {
    O -> (,) 1 ((,) a b);
    S n0 ->
-    (\xI xO xH p ->                    if (Prelude.==) p 1 then xH ()                    else if Prelude.even p then xO (Prelude.quot p 2)                         else xI (Prelude.quot p 2))
+    (\xI xO xH p ->
+                   if (Prelude.==) p 1 then xH ()
+                   else if Prelude.even p then xO (Prelude.quot p 2)
+                        else xI (Prelude.quot p 2))
       (\a' ->
-      (\xI xO xH p ->                    if (Prelude.==) p 1 then xH ()                    else if Prelude.even p then xO (Prelude.quot p 2)                         else xI (Prelude.quot p 2))
+      (\xI xO xH p ->
+                   if (Prelude.==) p 1 then xH ()
+                   else if Prelude.even p then xO (Prelude.quot p 2)
+                        else xI (Prelude.quot p 2))
         (\b' ->
         case compare a' b' of {
          Eq -> (,) a ((,) 1 1);
@@ -301,8 +378,8 @@ ggcdn n a b =
           case ggcdn n0 (sub a' b') b of {
            (,) g p ->
             case p of {
-             (,) ab bb -> (,) g ((,)
-              (add0 bb ((\x -> (Prelude.*) 2 x) ab)) bb)}}})
+             (,) ab bb -> (,) g ((,) (add0 bb ((\x -> (Prelude.*) 2 x) ab))
+              bb)}}})
         (\b0 ->
         case ggcdn n0 a b0 of {
          (,) g p ->
@@ -312,7 +389,10 @@ ggcdn n a b =
         1))
         b)
       (\a0 ->
-      (\xI xO xH p ->                    if (Prelude.==) p 1 then xH ()                    else if Prelude.even p then xO (Prelude.quot p 2)                         else xI (Prelude.quot p 2))
+      (\xI xO xH p ->
+                   if (Prelude.==) p 1 then xH ()
+                   else if Prelude.even p then xO (Prelude.quot p 2)
+                        else xI (Prelude.quot p 2))
         (\_ ->
         case ggcdn n0 a0 b of {
          (,) g p ->
@@ -335,7 +415,10 @@ ggcd a b =
 
 double :: Prelude.Integer -> Prelude.Integer
 double x =
-  (\fO fPos fNeg z ->                    if (Prelude.==) z 0 then fO ()                    else if (Prelude.>) z 0 then fPos z                         else fNeg ((Prelude.*) z (-1)))
+  (\fO fPos fNeg z ->
+                   if (Prelude.==) z 0 then fO ()
+                   else if (Prelude.>) z 0 then fPos z
+                        else fNeg ((Prelude.*) z (-1)))
     (\_ ->
     0)
     (\p ->  ((\x -> (Prelude.*) 2 x)
@@ -346,7 +429,10 @@ double x =
 
 succ_double :: Prelude.Integer -> Prelude.Integer
 succ_double x =
-  (\fO fPos fNeg z ->                    if (Prelude.==) z 0 then fO ()                    else if (Prelude.>) z 0 then fPos z                         else fNeg ((Prelude.*) z (-1)))
+  (\fO fPos fNeg z ->
+                   if (Prelude.==) z 0 then fO ()
+                   else if (Prelude.>) z 0 then fPos z
+                        else fNeg ((Prelude.*) z (-1)))
     (\_ -> 
     1)
     (\p ->  ((\x -> (Prelude.+) ((Prelude.*) 2 x) 1)
@@ -357,7 +443,10 @@ succ_double x =
 
 pred_double0 :: Prelude.Integer -> Prelude.Integer
 pred_double0 x =
-  (\fO fPos fNeg z ->                    if (Prelude.==) z 0 then fO ()                    else if (Prelude.>) z 0 then fPos z                         else fNeg ((Prelude.*) z (-1)))
+  (\fO fPos fNeg z ->
+                   if (Prelude.==) z 0 then fO ()
+                   else if (Prelude.>) z 0 then fPos z
+                        else fNeg ((Prelude.*) z (-1)))
     (\_ -> (\x -> (Prelude.*) x (-1))
     1)
     (\p -> 
@@ -369,9 +458,15 @@ pred_double0 x =
 
 pos_sub :: Prelude.Integer -> Prelude.Integer -> Prelude.Integer
 pos_sub x y =
-  (\xI xO xH p ->                    if (Prelude.==) p 1 then xH ()                    else if Prelude.even p then xO (Prelude.quot p 2)                         else xI (Prelude.quot p 2))
+  (\xI xO xH p ->
+                   if (Prelude.==) p 1 then xH ()
+                   else if Prelude.even p then xO (Prelude.quot p 2)
+                        else xI (Prelude.quot p 2))
     (\p ->
-    (\xI xO xH p ->                    if (Prelude.==) p 1 then xH ()                    else if Prelude.even p then xO (Prelude.quot p 2)                         else xI (Prelude.quot p 2))
+    (\xI xO xH p ->
+                   if (Prelude.==) p 1 then xH ()
+                   else if Prelude.even p then xO (Prelude.quot p 2)
+                        else xI (Prelude.quot p 2))
       (\q ->
       double (pos_sub p q))
       (\q ->
@@ -380,7 +475,10 @@ pos_sub x y =
       p))
       y)
     (\p ->
-    (\xI xO xH p ->                    if (Prelude.==) p 1 then xH ()                    else if Prelude.even p then xO (Prelude.quot p 2)                         else xI (Prelude.quot p 2))
+    (\xI xO xH p ->
+                   if (Prelude.==) p 1 then xH ()
+                   else if Prelude.even p then xO (Prelude.quot p 2)
+                        else xI (Prelude.quot p 2))
       (\q ->
       pred_double0 (pos_sub p q))
       (\q ->
@@ -389,7 +487,10 @@ pos_sub x y =
       (pred_double p))
       y)
     (\_ ->
-    (\xI xO xH p ->                    if (Prelude.==) p 1 then xH ()                    else if Prelude.even p then xO (Prelude.quot p 2)                         else xI (Prelude.quot p 2))
+    (\xI xO xH p ->
+                   if (Prelude.==) p 1 then xH ()
+                   else if Prelude.even p then xO (Prelude.quot p 2)
+                        else xI (Prelude.quot p 2))
       (\q -> (\x -> (Prelude.*) x (-1)) ((\x -> (Prelude.*) 2 x)
       q))
       (\q -> (\x -> (Prelude.*) x (-1))
@@ -404,7 +505,10 @@ add1 = (Prelude.+)
 
 opp :: Prelude.Integer -> Prelude.Integer
 opp x =
-  (\fO fPos fNeg z ->                    if (Prelude.==) z 0 then fO ()                    else if (Prelude.>) z 0 then fPos z                         else fNeg ((Prelude.*) z (-1)))
+  (\fO fPos fNeg z ->
+                   if (Prelude.==) z 0 then fO ()
+                   else if (Prelude.>) z 0 then fPos z
+                        else fNeg ((Prelude.*) z (-1)))
     (\_ ->
     0)
     (\x0 -> (\x -> (Prelude.*) x (-1))
@@ -418,9 +522,15 @@ mul0 = (Prelude.*)
 
 compare0 :: Prelude.Integer -> Prelude.Integer -> Comparison
 compare0 x y =
-  (\fO fPos fNeg z ->                    if (Prelude.==) z 0 then fO ()                    else if (Prelude.>) z 0 then fPos z                         else fNeg ((Prelude.*) z (-1)))
+  (\fO fPos fNeg z ->
+                   if (Prelude.==) z 0 then fO ()
+                   else if (Prelude.>) z 0 then fPos z
+                        else fNeg ((Prelude.*) z (-1)))
     (\_ ->
-    (\fO fPos fNeg z ->                    if (Prelude.==) z 0 then fO ()                    else if (Prelude.>) z 0 then fPos z                         else fNeg ((Prelude.*) z (-1)))
+    (\fO fPos fNeg z ->
+                   if (Prelude.==) z 0 then fO ()
+                   else if (Prelude.>) z 0 then fPos z
+                        else fNeg ((Prelude.*) z (-1)))
       (\_ ->
       Eq)
       (\_ ->
@@ -429,7 +539,10 @@ compare0 x y =
       Gt)
       y)
     (\x' ->
-    (\fO fPos fNeg z ->                    if (Prelude.==) z 0 then fO ()                    else if (Prelude.>) z 0 then fPos z                         else fNeg ((Prelude.*) z (-1)))
+    (\fO fPos fNeg z ->
+                   if (Prelude.==) z 0 then fO ()
+                   else if (Prelude.>) z 0 then fPos z
+                        else fNeg ((Prelude.*) z (-1)))
       (\_ ->
       Gt)
       (\y' ->
@@ -438,7 +551,10 @@ compare0 x y =
       Gt)
       y)
     (\x' ->
-    (\fO fPos fNeg z ->                    if (Prelude.==) z 0 then fO ()                    else if (Prelude.>) z 0 then fPos z                         else fNeg ((Prelude.*) z (-1)))
+    (\fO fPos fNeg z ->
+                   if (Prelude.==) z 0 then fO ()
+                   else if (Prelude.>) z 0 then fPos z
+                        else fNeg ((Prelude.*) z (-1)))
       (\_ ->
       Lt)
       (\_ ->
@@ -450,7 +566,10 @@ compare0 x y =
 
 sgn :: Prelude.Integer -> Prelude.Integer
 sgn z =
-  (\fO fPos fNeg z ->                    if (Prelude.==) z 0 then fO ()                    else if (Prelude.>) z 0 then fPos z                         else fNeg ((Prelude.*) z (-1)))
+  (\fO fPos fNeg z ->
+                   if (Prelude.==) z 0 then fO ()
+                   else if (Prelude.>) z 0 then fPos z
+                        else fNeg ((Prelude.*) z (-1)))
     (\_ ->
     0)
     (\_ -> 
@@ -467,7 +586,10 @@ leb x y =
 
 abs :: Prelude.Integer -> Prelude.Integer
 abs z =
-  (\fO fPos fNeg z ->                    if (Prelude.==) z 0 then fO ()                    else if (Prelude.>) z 0 then fPos z                         else fNeg ((Prelude.*) z (-1)))
+  (\fO fPos fNeg z ->
+                   if (Prelude.==) z 0 then fO ()
+                   else if (Prelude.>) z 0 then fPos z
+                        else fNeg ((Prelude.*) z (-1)))
     (\_ ->
     0)
     (\p -> 
@@ -478,7 +600,10 @@ abs z =
 
 to_pos :: Prelude.Integer -> Prelude.Integer
 to_pos z =
-  (\fO fPos fNeg z ->                    if (Prelude.==) z 0 then fO ()                    else if (Prelude.>) z 0 then fPos z                         else fNeg ((Prelude.*) z (-1)))
+  (\fO fPos fNeg z ->
+                   if (Prelude.==) z 0 then fO ()
+                   else if (Prelude.>) z 0 then fPos z
+                        else fNeg ((Prelude.*) z (-1)))
     (\_ ->
     1)
     (\p ->
@@ -490,11 +615,17 @@ to_pos z =
 ggcd0 :: Prelude.Integer -> Prelude.Integer -> (,) Prelude.Integer
          ((,) Prelude.Integer Prelude.Integer)
 ggcd0 a b =
-  (\fO fPos fNeg z ->                    if (Prelude.==) z 0 then fO ()                    else if (Prelude.>) z 0 then fPos z                         else fNeg ((Prelude.*) z (-1)))
+  (\fO fPos fNeg z ->
+                   if (Prelude.==) z 0 then fO ()
+                   else if (Prelude.>) z 0 then fPos z
+                        else fNeg ((Prelude.*) z (-1)))
     (\_ -> (,) (abs b) ((,) 0
     (sgn b)))
     (\a0 ->
-    (\fO fPos fNeg z ->                    if (Prelude.==) z 0 then fO ()                    else if (Prelude.>) z 0 then fPos z                         else fNeg ((Prelude.*) z (-1)))
+    (\fO fPos fNeg z ->
+                   if (Prelude.==) z 0 then fO ()
+                   else if (Prelude.>) z 0 then fPos z
+                        else fNeg ((Prelude.*) z (-1)))
       (\_ -> (,) (abs a) ((,) (sgn a)
       0))
       (\b0 ->
@@ -509,7 +640,10 @@ ggcd0 a b =
          (,) aa bb -> (,) ( g) ((,) ( aa) ((\x -> (Prelude.*) x (-1)) bb))}})
       b)
     (\a0 ->
-    (\fO fPos fNeg z ->                    if (Prelude.==) z 0 then fO ()                    else if (Prelude.>) z 0 then fPos z                         else fNeg ((Prelude.*) z (-1)))
+    (\fO fPos fNeg z ->
+                   if (Prelude.==) z 0 then fO ()
+                   else if (Prelude.>) z 0 then fPos z
+                        else fNeg ((Prelude.*) z (-1)))
       (\_ -> (,) (abs a) ((,) (sgn a)
       0))
       (\b0 ->
@@ -555,8 +689,7 @@ qvec_plus n v1 v2 =
 
 qvec_dot :: Nat -> Qvec -> Qvec -> Rational
 qvec_dot n v1 v2 =
-  fold_left qplus ((\n d -> (Data.Ratio.%) n d) 0 1) n
-    (map2 qmult n v1 v2)
+  fold_left qplus ((\n d -> (Data.Ratio.%) n d) 0 1) n (map2 qmult n v1 v2)
 
 class0 :: Rational -> Prelude.Bool
 class0 i =
@@ -578,8 +711,8 @@ consb :: Nat -> Qvec -> ([]) Rational
 consb n v =
   (\a _ v -> a : v) ((\n d -> (Data.Ratio.%) n d) ( 1) 1) n v
 
-inner_perceptron :: Nat -> (([]) ((,) Qvec Prelude.Bool)) -> Qvec ->
-                    Option Qvec
+inner_perceptron :: Nat -> (([]) ((,) Qvec Prelude.Bool)) -> Qvec -> Option
+                    Qvec
 inner_perceptron n t w =
   case t of {
    [] -> None;
@@ -595,8 +728,8 @@ inner_perceptron n t w =
          None -> Some
           (qvec_plus (S n) w (qvec_mult_class (S n) l (consb n f)))}}}}
 
-perceptron :: Nat -> Nat -> (([]) ((,) Qvec Prelude.Bool)) -> Qvec ->
-              Option Qvec
+perceptron :: Nat -> Nat -> (([]) ((,) Qvec Prelude.Bool)) -> Qvec -> Option
+              Qvec
 perceptron n e t w =
   case e of {
    O -> None;
@@ -627,8 +760,8 @@ inner_perceptron_MCE n t w =
 gas :: (Nat -> a1) -> a1
 gas = (\f -> let infiniteGas = S infiniteGas in f infiniteGas)
 
-fueled_perceptron :: Nat -> Nat -> (([]) ((,) Qvec Prelude.Bool)) -> Qvec
-                     -> Option Qvec
+fueled_perceptron :: Nat -> Nat -> (([]) ((,) Qvec Prelude.Bool)) -> Qvec ->
+                     Option Qvec
 fueled_perceptron n _ t w =
   gas (\fuel -> perceptron n fuel t w)
 

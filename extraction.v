@@ -34,6 +34,8 @@ Definition fueled_perceptron
   : option (Qvec (S n)) :=
   gas (fun fuel => perceptron fuel T w).
 
+Extraction "./Benchmarks/hs/Perceptron.hs" fueled_perceptron inner_perceptron_MCE.
+
 Extract Inductive positive =>
 "Prelude.Integer" [ "(\x -> (Prelude.+) ((Prelude.*) 2 x) 1)"
                     "(\x -> (Prelude.*) 2 x)" "1" ]
@@ -65,4 +67,4 @@ Extract Constant Qred => "(\x -> x)".
 Extract Constant Qeq_bool => "(Prelude.==)".
 Extract Constant Qle_bool => "(Prelude.<=)".
 
-Extraction "./Benchmarks/hs/Perceptron.hs" fueled_perceptron inner_perceptron_MCE.
+Extraction "./Benchmarks/hsopt/Perceptron.hs" fueled_perceptron inner_perceptron_MCE.
