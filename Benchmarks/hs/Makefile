@@ -1,16 +1,10 @@
-all: ReadData ReadDataOpt
+all: RunPerceptron RunValidator
 
-ReadData: ReadData.hs FueledPerceptron.hs
-	ghc ReadData.hs
+RunPerceptron: RunPerceptron.hs ReadData.hs Perceptron.hs
+	ghc RunPerceptron.hs
 
-FueledPerceptron.hs:
-	cd ../../ && make Benchmarks/hs/FueledPerceptron.hs
-
-ReadDataOpt: ReadDataOpt.hs FueledPerceptronOpt.hs
-	ghc ReadDataOpt.hs
-
-FueledPerceptronOpt.hs:
-	cd ../../ && make Benchmarks/hs/FueledPerceptronopt.hs
+RunValidator: RunValidator.hs ReadData.hs Perceptron.hs
+	ghc RunValidator.hs
 
 clean:
-	rm -rf *.o *.hi ReadData ReadDataOpt
+	rm -f *.hi *.o RunPerceptron RunValidator

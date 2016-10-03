@@ -16,10 +16,10 @@ endif
 all: $(BIN)
 
 perceptron: perceptron.cpp
-	$(COMPILE)
+	$(COMPILE) -lgmp
 
 data_generator: data_generator.cpp
-	$(COMPILE)
+	$(COMPILE) -lgmp
 
 makeplotfiles: makeplotfiles.cpp
 	$(COMPILE)

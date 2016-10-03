@@ -1,6 +1,9 @@
 # CoqPerceptron
 Verified Coq Implementation of the Integer-Valued Perceptron Algorithm
 
+# NOTE:
+This branch is in the transition phase of Moving from Integer (Z) to Rationals (Q).
+
 # Key Files
 
 ## Coq
