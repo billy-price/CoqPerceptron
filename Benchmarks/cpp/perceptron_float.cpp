@@ -16,6 +16,7 @@
 #include <vector>
 #include <string>
 #include <cmath>
+#include <limits>
 using namespace std;
 
 inline double dot(const vector<double>& x, const vector<double>& y){
