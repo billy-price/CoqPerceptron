@@ -3,6 +3,7 @@ CFLAGS = -std=c++11
 
 SRC = \
 	perceptron.cpp \
+	perceptron_float.cpp \
 	data_generator.cpp \
 	makeplotfiles.cpp
 BIN = $(SRC:.cpp=)
