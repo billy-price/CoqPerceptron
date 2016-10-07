@@ -1,4 +1,4 @@
-Require Import QvecArith PerceptronDef.
+Require Import QvecArith PerceptronDef TerminationRefinement.
 
 Lemma inner_perceptron_correct_class: forall {n: nat} (w : Qvec (S n)) (f : Qvec n) (l : bool) (T : (list ((Qvec n)*bool))),
  inner_perceptron ((f, l):: T) w = None -> correct_class (Qvec_dot w (consb f)) l = true.
@@ -22,6 +22,13 @@ Proof.
   destruct a. constructor.
   apply IHT. apply inner_perceptron_correct_cons in H. apply H.
   apply inner_perceptron_correct_class in H. apply H. Qed.
+
+Theorem inn_perceptron_MCE_correct_classified : forall {n : nat} (T : (list ((Qvec n)*bool))) (w : Qvec (S n)),
+  inner_perceptron_MCE T w = None -> correctly_classifiedP T w.
+Proof.
+  intros. apply inner_perceptron_correct_classified.
+  apply inner_perceptron_MCE_inner_perceptron_None.
+  apply H. Qed.
 
 Theorem correct_classified_inner_perceptron : forall {n : nat} (T : (list ((Qvec n)*bool))) (w : Qvec (S n)),
   correctly_classifiedP T w -> inner_perceptron T w = None.
@@ -66,12 +73,24 @@ Theorem perceptron_linearly_separable : forall {n : nat } (E: nat) (w0 w : Qvec 
 Proof.
   intros n E. induction E; intros w0 w T H.
   { inversion H. } (* base case E = 0 *)
-  unfold perceptron in H. 
-  fold (perceptron E T w0) in IHE.
+  unfold perceptron in H.
   destruct (inner_perceptron T w0) eqn: H1.
     fold (perceptron E T q) in H. apply IHE in H. apply H.
     apply inner_perceptron_correct_classified in H1. unfold linearly_separable.
       exists w0. apply H1. Qed.
+
+(* alternative and stronger soudness proof *)
+Theorem perceptron_sound : forall {n : nat} (E : nat) (w0 w : Qvec (S n)) (T : list ((Qvec n)*bool)),
+  perceptron E T w0 = Some w -> correctly_classifiedP T w.
+Proof.
+  intros n E. induction E; intros w0 w T H.
+  { inversion H. }
+  unfold perceptron in H.
+  destruct (inner_perceptron T w0) eqn: H1.
+    fold (perceptron E T q) in H.
+    apply (IHE _ _ _ H).
+    apply inner_perceptron_correct_classified.
+    inversion H; subst. apply H1. Qed.
 
 Theorem not_linearly_seperable_perceptron : forall {n : nat} (E : nat) (w0 : Qvec (S n)) (T : (list ((Qvec n)*bool))),
   ~(linearly_separable T) -> perceptron E T w0 = None.
@@ -82,4 +101,4 @@ Proof.
   destruct (inner_perceptron T w0) eqn: H1.
   fold (perceptron E T q). apply (IHE q) in H. apply H.
   unfold not in H. exfalso. apply H. apply inner_perceptron_correct_classified in H1.
-  unfold linearly_separable. exists w0. apply H1. Qed. 
+  unfold linearly_separable. exists w0. apply H1. Qed.
