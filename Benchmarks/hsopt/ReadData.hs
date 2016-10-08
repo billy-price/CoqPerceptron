@@ -17,9 +17,14 @@ readRational input =
   if (isInfixOf "%" input) then
     read input
   else
-    ((read intPart)*(10 ^ length fracPart) + (read fracPart)) % (10 ^ length fracPart)
-    where (intPart, fromDot) = span (/='.') input
+    if (ePart < 0) then
+      ((read intPart)*(10 ^ (length fracPart)) + (read fracPart)) % (10 ^ (-ePart + length fracPart))
+    else
+      (((read intPart)*(10 ^ (ePart + length fracPart)) + (read fracPart))*(10 ^ ePart)) % (10 ^ length fracPart)
+    where (numPart, fromE)   = span (/='e') input					-- allow exponential notation 1.2e2 -> 120
+          (intPart, fromDot) = span (/='.') numPart
           fracPart           = if null fromDot then "0" else tail fromDot
+          ePart              = if null fromE then 0 else (read (tail fromE))
 
 debug = P.False
 

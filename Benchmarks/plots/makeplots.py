@@ -15,31 +15,35 @@ def plot_data(img_name, file_name, xlabel, yRange = None):
   B = []
   C = []
   E = []
+  F = []
   N = [""]
 
-  F = open(file_name, 'r')
+  file = open(file_name, 'r')
 
-  for l in F.readlines():
+  for l in file.readlines():
     data = l.split()
     N.append(data[0])
     A.append(float(data[8]))
     B.append(float(data[2]))
     C.append(float(data[5]))
     E.append(float(data[11]))
-  F.close()
+    F.append(float(data[14]))
+  file.close()
 
   X = np.arange(len(A))
 
-  D = [x + y for (x, y) in zip(B, C)]
+  D = [x + y for (x, y) in zip(F, C)]
   A = [x / y for (x, y) in zip(A, D)]
   B = [x / y for (x, y) in zip(B, D)]
   C = [x / y for (x, y) in zip(C, D)]
   E = [x / y for (x, y) in zip(E, D)]
+  F = [x / y for (x, y) in zip(F, D)]
 
-  a_bar = plot.bar(X-0.375, A, color = '#00fa9a', width = 0.25, hatch='//')
-  b_bar = plot.bar(X-0.125, B, color = 'cyan',width = 0.25, hatch='xx')
-  c_bar = plot.bar(X-0.125, C, color = '#ee82ee', bottom = B, width = 0.25, hatch='*')
-  e_bar = plot.bar(X+0.125, E, color = 'orange', width = 0.25)
+  a_bar = plot.bar(X+0.375, A, color = '#00fa9a', width = 0.25, hatch='//')
+  b_bar = plot.bar(X+0.125, B, color = 'cyan',width = 0.25, hatch='xx')
+  c_bar = plot.bar(X-0.375, C, color = '#ee82ee', bottom = F, width = 0.25, hatch='*')
+  e_bar = plot.bar(X-0.125, E, color = 'orange', width = 0.25)
+  f_bar = plot.bar(X-0.375, F, color = '#ffff00', width=0.25, hatch='\\')
 
   axis.axes.get_xaxis().set_ticklabels(N)
 
@@ -49,13 +53,13 @@ def plot_data(img_name, file_name, xlabel, yRange = None):
   axis.axes.get_yaxis().set_ticklabels(
        [x.get_text()+'x' for x in axis.get_yticklabels()])
 
-  plot.legend([a_bar, b_bar, c_bar, e_bar],
-              ["Coq Perceptron", "C++ Perceptron", "Coq Validator", "CoqOpt"],
+  plot.legend([a_bar, b_bar, c_bar, e_bar, f_bar],
+              ["Coq Perceptron", "C++ Perceptron", "Coq Validator", "CoqOpt", "C++ Float"],
               loc="upper center", bbox_to_anchor=(0.5, 1.125), ncol=2)
   plot.xlabel(xlabel)
   plot.ylabel("Time")
   plot.savefig(img_name)
 
-plot_data("images/VectorsPlot.png", "vectors.plot", "Number of Vectors", [0,9])
-plot_data("images/FeaturePlot.png", "features.plot", "Number of Features", [0,3])
-plot_data("images/ZPlot.png", "Z.plot", u'Precision Bound -- Q = a/Z, a ∈ [-Z, Z]', [0,3])
+plot_data("images/VectorsPlot.png", "vectors.plot", "Number of Vectors") # [0, 9]
+plot_data("images/FeaturePlot.png", "features.plot", "Number of Features") # [0, 3]
+plot_data("images/ZPlot.png", "Z.plot", u'Precision Bound -- Q = a/Z, a ∈ [-Z, Z]') #[0, 3]
