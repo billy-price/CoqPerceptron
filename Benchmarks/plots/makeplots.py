@@ -47,14 +47,22 @@ def plot_data(img_name, file_name, xlabel, yRange = None):
 
   axis.axes.get_xaxis().set_ticklabels(N)
 
+  # set y-axis log scale, with labels at 10^0, 10^1, 10^2, 10^3
+  y = np.array([1, 10, 100, 1000])
+  axis.set_yscale('log')
+  plot.yticks(y)
+  
   if yRange:
     plot.ylim(yRange)
   figure.canvas.draw()
+
   axis.axes.get_yaxis().set_ticklabels(
        [x.get_text()+'x' for x in axis.get_yticklabels()])
 
-  plot.legend([a_bar, b_bar, c_bar, e_bar, f_bar],
-              ["Coq Perceptron", "C++ Perceptron", "Coq Validator", "CoqOpt", "C++ Float"],
+  plot.legend([f_bar, c_bar, e_bar, b_bar, a_bar],
+              ["C++ Float", "Validator",
+               "Opt. Coq", "C++ Rational",
+               "Vanilla Coq"],
               loc="upper center", bbox_to_anchor=(0.5, 1.125), ncol=2)
   plot.xlabel(xlabel)
   plot.ylabel("Time")
