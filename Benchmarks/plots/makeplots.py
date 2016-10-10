@@ -70,4 +70,4 @@ def plot_data(img_name, file_name, xlabel, yRange = None):
 
 plot_data("images/VectorsPlot.png", "vectors.plot", "Number of Vectors") # [0, 9]
 plot_data("images/FeaturePlot.png", "features.plot", "Number of Features") # [0, 3]
-plot_data("images/ZPlot.png", "Z.plot", u'Expected Feature Magnitude, q = a/Z, a ∈ [-Z, Z]') #[0, 3]
+plot_data("images/ZPlot.png", "Z.plot", u'Feature Coefficients q = a/Z, for a ∈ [-Z, Z]') #[0, 3]
