@@ -39,11 +39,11 @@ def plot_data(img_name, file_name, xlabel, yRange = None):
   E = [x / y for (x, y) in zip(E, D)]
   F = [x / y for (x, y) in zip(F, D)]
 
-  a_bar = plot.bar(X+0.375, A, color = '#00fa9a', width = 0.25, hatch='//')
-  b_bar = plot.bar(X+0.125, B, color = 'cyan',width = 0.25, hatch='xx')
-  c_bar = plot.bar(X-0.375, C, color = '#ee82ee', bottom = F, width = 0.25, hatch='*')
-  e_bar = plot.bar(X-0.125, E, color = 'orange', width = 0.25)
-  f_bar = plot.bar(X-0.375, F, color = '#ffff00', width=0.25, hatch='\\')
+  a_bar = plot.bar(X+0.3, A, color = '#00fa9a', width = 0.2, hatch='//')
+  b_bar = plot.bar(X+0.1, B, color = 'cyan',width = 0.2, hatch='xx')
+  c_bar = plot.bar(X-0.3, C, color = '#ee82ee', bottom = F, width = 0.2, hatch='*')
+  e_bar = plot.bar(X-0.1, E, color = 'orange', width = 0.2)
+  f_bar = plot.bar(X-0.3, F, color = '#ffff00', width=0.2, hatch='\\')
 
   axis.axes.get_xaxis().set_ticklabels(N)
 
@@ -70,4 +70,4 @@ def plot_data(img_name, file_name, xlabel, yRange = None):
 
 plot_data("images/VectorsPlot.png", "vectors.plot", "Number of Vectors") # [0, 9]
 plot_data("images/FeaturePlot.png", "features.plot", "Number of Features") # [0, 3]
-plot_data("images/ZPlot.png", "Z.plot", u'Precision Bound -- Q = a/Z, a ∈ [-Z, Z]') #[0, 3]
+plot_data("images/ZPlot.png", "Z.plot", u'Expected Feature Magnitude, q = a/Z, a ∈ [-Z, Z]') #[0, 3]
