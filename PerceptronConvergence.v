@@ -1,5 +1,5 @@
 Require Import QArith Qround QvecArith PerceptronDef.
-Require Import TerminationRefinement MCEBounds.
+Require Import TerminationRefinement MCEBounds PerceptronSound.
 
 Definition Qfloor_nat (q : Q) : nat := Z.to_nat (Qfloor q).
 
@@ -83,10 +83,10 @@ Proof.
   ****************************************************************************************)
 Theorem linearly_separable_perceptron_MCE : forall {n : nat} (w0 : Qvec (S n)) (T : (list ((Qvec n)*bool))),
   linearly_separable T ->
-  exists (E0 : nat) M (w : (Qvec (S n))), forall E, (E > E0)%nat -> perceptron_MCE E T w0 = Some (M, w).
+  exists (E0 : nat) M (w : (Qvec (S n))), forall E, (E >= E0)%nat -> perceptron_MCE E T w0 = Some (M, w).
 Proof.
   intros. apply linearly_separable_MCE with w0 T in H. destruct H as [E0 H].
-  exists E0. exists (MCE E0 T w0). exists (Qvec_sum_class w0 (MCE E0 T w0)). intros E.
+  exists (S E0). exists (MCE E0 T w0). exists (Qvec_sum_class w0 (MCE E0 T w0)). intros E.
   intros H1. apply MCE_eq_perceptron_MCE in H. apply perceptron_MCE_done with (S E0). omega. apply H. Qed.
 
  (****************************************************************************************
@@ -94,11 +94,14 @@ Proof.
     perceptron_MCE reaches a fixed point + termination refinement
  ****************************************************************************************)
 Theorem linearly_separable_perceptron : forall {n : nat} (w0 : Qvec (S n)) (T : (list ((Qvec n)*bool))),
-  linearly_separable T ->
-  exists (E0 : nat) (w : (Qvec (S n))), forall E, (E > E0)%nat -> perceptron E T w0 = Some w.
+  linearly_separable T <->
+  exists (E0 : nat) (w : (Qvec (S n))), forall E, (E >= E0)%nat -> perceptron E T w0 = Some w.
 Proof.
-  intros. apply linearly_separable_perceptron_MCE with w0 T in H.
+  split; intros. apply linearly_separable_perceptron_MCE with w0 T in H.
   destruct H as [E0 [M [w H]]]. exists E0. exists w. intros. apply H in H0.
-  apply perceptron_MCE_perceptron. exists M. auto. Qed.
+  apply perceptron_MCE_perceptron. exists M. auto.
+  destruct H as [E0 [w H]].
+  apply (perceptron_linearly_separable (S E0) w0 w).
+  apply H. auto. Qed.
 
 Print Assumptions linearly_separable_perceptron.
