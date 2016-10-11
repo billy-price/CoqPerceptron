@@ -25,6 +25,9 @@ data_generator: data_generator.cpp
 makeplotfiles: makeplotfiles.cpp
 	$(COMPILE)
 
+perceptron_float: perceptron_float.cpp
+	$(COMPILE)
+
 clean:
 	rm -f $(BIN)
 
