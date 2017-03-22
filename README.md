@@ -1,5 +1,6 @@
 # CoqPerceptron
 Verified Coq Implementation of the Rational-Valued Perceptron Algorithm
+and Rational-Valued Averaged-Perceptron Algorithm.
 
 # Key Files
 
