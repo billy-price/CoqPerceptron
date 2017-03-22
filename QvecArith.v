@@ -73,6 +73,7 @@ Definition correct_class (i : Q) (l : bool) : bool :=
   andb (Bool.eqb l (class i)) (negb (Qeq_bool i 0)).
 Definition Qvec_mult_class {n:nat} (l :bool) (f : Qvec n) :=
   if l then f else map (Qmult (-1%Z#1)) f.
+Definition Qvec_mult_scalar {n : nat} (s : Q) (f : Qvec n) := map (Qmult s) f.
 Definition consb {n : nat} (v : Qvec n) := cons _ 1 _ v.
 
 Fixpoint Qvec_sum_class {n : nat} (w : Qvec (S n)) (M : list ((Qvec n)*bool)) : Qvec (S n) :=

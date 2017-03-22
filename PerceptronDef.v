@@ -72,6 +72,42 @@ Fixpoint MCE {n: nat} (E : nat) (T: list ((Qvec n)*bool)) (w : Qvec (S n)) : (li
     end
   end.
 
+Fixpoint inner_average_perceptron {n : nat} (T: list ((Qvec n) * (bool))) (w: Qvec (S n))
+         (u : Qvec (S n)) (c : nat) : option ((Qvec (S n)) * (Qvec (S n))) :=
+  match T with
+  | List.nil => None
+  | List.cons (f, l) T' =>
+    match correct_class (Qvec_dot w (consb f)) l with
+    | true => inner_average_perceptron T' w u (S c)
+    | false =>
+      let xl := Qvec_mult_class l (consb f) in
+      let w' := Qvec_plus w xl in
+      let u' := Qvec_plus u (Qvec_mult_scalar ((Z.of_nat c)#1) xl) in
+      match inner_average_perceptron T' w' u' (S c) with
+      | None => Some (w', u')
+      | Some p =>  Some p
+      end
+    end
+  end.
+
+Fixpoint average_perceptron_aux {n : nat} (E : nat) (T : list ((Qvec n) * bool)) (w : Qvec (S n))
+         (u : Qvec (S n)) (c : nat) : option ((Qvec (S n)) * (Qvec (S n)) * nat) :=
+  match E with
+  | O => None
+  | S E' =>
+    match inner_average_perceptron T w u c with
+    | None => Some (w, u, ((length T) + c)%nat)
+    | Some (w', u') => average_perceptron_aux E' T w' u' ((length T) + c)
+    end
+  end.
+
+Definition average_perceptron {n : nat} (E : nat) (T : list ((Qvec n) * bool)) (w : Qvec (S n)) :
+  option (Qvec (S n)) :=
+  match average_perceptron_aux E T w w 1 with
+  | None => None
+  | Some (w, u, c) => Some (Qvec_plus w (Qvec_mult_scalar (-1%Z#(Pos.of_nat c)) u))
+  end.
+
 (********************************************************************************************
     Linear Separability
  ********************************************************************************************)

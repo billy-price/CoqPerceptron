@@ -104,4 +104,26 @@ Proof.
   apply (perceptron_linearly_separable (S E0) w0 w).
   apply H. auto. Qed.
 
+(*******************************************************************************************
+  Show that Average Perceptron reaches a fixed point (converges)
+    linearly_separable_perceptron + termination refinement
+ *******************************************************************************************)
+Theorem linearly_separable_average_perceptron : forall {n : nat} (w0 : Qvec (S n)) (T : (list ((Qvec n)*bool))),
+    linearly_separable T <->
+    exists (E0 : nat) (w : (Qvec (S n))), forall E, (E >= E0)%nat -> average_perceptron E T w0 = Some w.
+Proof.
+  split; intros. apply linearly_separable_perceptron with w0 T in H.
+  destruct H as [E0 [w H]].
+  assert (forall E, (E >= E0)%nat -> exists w, average_perceptron E T w0 = Some w).
+  { intros. apply H in H0. apply perceptron_average_perceptron. exists w. auto. }
+  clear H. exists E0. assert (E0 >= E0)%nat. omega. apply H0 in H.
+  destruct H as [? H]. exists x. clear -H.
+  intros. eapply average_perceptron_done. apply H0. apply H.
+  destruct H as [E0 [w H]]. assert (E0 >= E0)%nat. omega.
+  apply H in H0. assert (exists w, perceptron E0 T w0 = Some w).
+  apply perceptron_average_perceptron. exists w. apply H0.
+  destruct H1 as [? H1]. apply (perceptron_linearly_separable E0 w0 x).
+  apply H1.
+Qed.
+
 Print Assumptions linearly_separable_perceptron.

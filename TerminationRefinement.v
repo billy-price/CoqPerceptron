@@ -45,6 +45,43 @@ Proof.
   apply inner_perceptron_MCE_inner_perceptron_None in H2.
   rewrite H2. exists (List.cons (f,l) List.nil). inversion H1; subst. auto. Qed.
 
+Theorem inner_perceptron_average_None : forall {n : nat} T (w u : Qvec (S n)) c,
+  inner_average_perceptron T w u c = None <-> inner_perceptron T w = None.
+Proof.
+  intros n T; induction T; intros; split; intros; auto.
+  + (* -> *) simpl in *. destruct a.
+    destruct (correct_class (Qvec_dot w (consb q)) b).
+    eapply IHT. apply H.
+    destruct (inner_average_perceptron T _ _ (S c)); inversion H.
+  + (* <- *) simpl in *. destruct a.
+    destruct (correct_class (Qvec_dot w (consb q)) b).
+    apply IHT, H.
+    destruct (inner_perceptron T _); inversion H.
+Qed.
+
+Theorem inner_perceptron_average_Some : forall {n : nat} T (w w' u : Qvec (S n)) c,
+  (exists u', inner_average_perceptron T w u c = Some (w', u')) <->
+  inner_perceptron T w = Some w'.
+Proof.
+  intros n T; induction T; intros; split; intros.
+  + destruct H as [? H]. inversion H.
+  + inversion H.
+  + simpl in *. destruct a. destruct (correct_class _ _).
+    apply IHT in H. apply H.
+    destruct (inner_average_perceptron _ _ _ _) eqn:?H. destruct p.
+    rewrite <- H0 in H. apply IHT in H. rewrite H. reflexivity.
+    apply inner_perceptron_average_None in H0. rewrite H0.
+    destruct H as [? H]. inversion H; subst. reflexivity.
+  + simpl in *. destruct a. destruct (correct_class _ _).
+    apply IHT, H.
+    destruct (inner_perceptron T _) eqn:?H.
+    eapply IHT in H0. destruct H0 as [? H0].
+    rewrite H0. inversion H; subst. exists x. reflexivity.
+    eapply inner_perceptron_average_None in H0.
+    rewrite H0. inversion H; subst.
+    eexists. reflexivity.
+Qed.
+    
  (***************************************************************************************************
     Links return values of MCE, Perceptron_MCE and perceptron.
   ***************************************************************************************************)
@@ -80,7 +117,40 @@ Proof.
   auto. inversion H1; subst; clear H1. apply inner_perceptron_MCE_inner_perceptron_None in H2.
   unfold perceptron_MCE. rewrite H2. exists List.nil. auto. Qed.
 
- (***************************************************************************************************
+Theorem perceptron_average_perceptron_aux: forall (n : nat) (E : nat) (T : list ((Qvec n)*bool))
+                                         (w0 w u0 : Qvec (S n)) (c : nat),
+  perceptron E T w0 = Some w <-> (exists u c', average_perceptron_aux E T w0 u0 c = Some (w, u, c')).
+Proof.
+  intros n E; induction E; intros; split; intros.
+  + (* E = 0 -> *) inversion H.
+  + (* E = 0 <- *) destruct H as [u [c' H]]. inversion H.
+  + (* -> *) simpl in *. destruct (inner_perceptron T w0) eqn:?H.
+    apply (inner_perceptron_average_Some _ _ _ u0 c) in H0.
+    destruct H0 as [? H0]. eapply IHE in H. rewrite H0.
+    apply H. inversion H; subst. eapply inner_perceptron_average_None in H0.
+    rewrite H0. eexists. eexists. reflexivity.
+  + simpl in *. destruct (inner_average_perceptron T _ _ _) eqn:?H.
+    destruct p. assert (inner_perceptron T w0 = Some q).
+    eapply inner_perceptron_average_Some. exists q0. apply H0.
+    rewrite H1. apply IHE in H. apply H.
+    apply inner_perceptron_average_None in H0. rewrite H0.
+    destruct H as [? [? H]]. inversion H; subst. reflexivity.
+Qed.
+
+Theorem perceptron_average_perceptron : forall (n : nat) (E : nat) T (w0 : Qvec (S n)),
+  (exists w, perceptron E T w0 = Some w) <-> (exists w, average_perceptron E T w0 = Some w).
+Proof.
+  intros. split; intros. destruct H as [w H].
+  apply (perceptron_average_perceptron_aux _ _ _ _ _ w0 1) in H.
+  unfold average_perceptron. destruct H as [u [c' H]].
+  rewrite H. eexists. reflexivity.
+  destruct H as [w H]. unfold average_perceptron in H.
+  destruct (average_perceptron_aux _ _ _ _ _) eqn:?H.
+  destruct p. destruct p. exists q. eapply perceptron_average_perceptron_aux.
+  exists q0, n0. apply H0. inversion H.
+Qed.
+
+(***************************************************************************************************
     Show that w = Sum of Misclassified Errors
   ***************************************************************************************************)
 Lemma inner_perceptron_MCE_sum_m_w : forall {n : nat} (T M: (list ((Qvec n)*bool))) (w0 w: Qvec (S n)),
@@ -230,3 +300,37 @@ Proof.
       } right. rewrite H3. reflexivity.
     right. reflexivity.
   } right. apply MCE_S in H0. apply H0. Qed.
+
+(*************************************************************************************************
+    Show that the average perceptron reaches a fixed point when it terminates
+    (i.e. no additional fuel changes it's return value)
+ *************************************************************************************************)
+
+Theorem average_perceptron_aux_S : forall {n : nat} (E : nat) T (w0 u0 : Qvec (S n)) p c,
+  average_perceptron_aux E T w0 u0 c = Some p -> average_perceptron_aux (S E) T w0 u0 c = Some p.
+Proof.
+  intros n E; induction E; intros. inversion H.
+  unfold average_perceptron_aux in H.
+  unfold average_perceptron_aux.
+  destruct (inner_average_perceptron T _ _ _). destruct p0.
+  fold (average_perceptron_aux E T q q0 (length T + c)) in H.
+  apply IHE in H. simpl in H.
+  destruct (inner_average_perceptron T _ _ _). destruct p0.
+  apply H. apply H. apply H.
+Qed.
+
+Theorem average_perceptron_aux_done : forall {n : nat} (E0 E : nat) T (w0 u0 : Qvec (S n)) p c,
+  E >= E0 -> average_perceptron_aux E0 T w0 u0 c = Some p ->
+  average_perceptron_aux E T w0 u0 c = Some p.
+Proof.
+  intros. induction H. apply H0. apply average_perceptron_aux_S. apply IHle.
+Qed.
+
+Theorem average_perceptron_done : forall {n : nat} (E0 E : nat) T (w0 w : Qvec (S n)),
+  E >= E0 -> average_perceptron E0 T w0 = Some w -> average_perceptron E T w0 = Some w.
+Proof.
+  intros. unfold average_perceptron in *.
+  destruct (average_perceptron_aux E0 T w0 w0 1) eqn:?H. destruct p. destruct p.
+  apply (average_perceptron_aux_done _ E) in H1.
+  rewrite H1. apply H0. apply H. inversion H0.
+Qed.
