@@ -1,5 +1,6 @@
 Require Import QArith Qround QvecArith PerceptronDef.
 Require Import TerminationRefinement MCEBounds PerceptronSound.
+Require Import Omega.
 
 Definition Qfloor_nat (q : Q) : nat := Z.to_nat (Qfloor q).
 

@@ -161,8 +161,8 @@ Proof.
   destruct a as [f l]. inversion H. destruct (correct_class (Qvec_dot w0 (consb f)) l).
   apply IHT in H1. apply H1.
   destruct (inner_perceptron_MCE T (Qvec_plus w0 (Qvec_mult_class l (consb f)))) eqn:H3;
-  [destruct p as [M' w']; apply IHT in H3|]; inversion H1; subst; clear H1;
-  [rewrite <- H4|]; reflexivity. Qed.
+  [destruct p as [M' w']; apply IHT in H3|]; inversion H1; [rewrite <- H4|]; subst; clear H1;
+  reflexivity. Qed.
 
 Lemma perceptron_MCE_sum_m_w : forall {n : nat} (E : nat) (T M: (list ((Qvec n)*bool))) (w0 w: Qvec (S n)),
   perceptron_MCE E T w0 = Some (M, w) -> w = Qvec_sum_class w0 M.

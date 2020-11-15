@@ -3,6 +3,7 @@ Set Implicit Arguments.
 Require Import QArith.
 Require Import QvecArith PerceptronDef.
 
+Require Extraction.
 Extraction Language Haskell.
 
 Extract Inductive Vector.t =>
